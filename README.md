@@ -2,7 +2,8 @@
 
 **Free · MIT License** · macOS menu-bar keep-awake utility
 
-**Version 1.1.0** · Author: **Vladimir Yazydzhi** (Владимир Языджи)
+**Version 1.1.1** · Author: **Vladimir Yazydzhi** (Владимир Языджи)  
+**Universal binary** — Apple Silicon (arm64) and Intel (x86_64).
 
 InfiniWake keeps your Mac awake with a dedicated hotkey (default **F4**).  
 Caps Lock is used only as a **physical LED indicator** — not as the toggle — so it stays free for input-source switching. While the LED is on, real CAPS typing is filtered out (Accessibility required).
@@ -14,7 +15,8 @@ UI languages: **English** / **Русский** (auto from system language, or ch
 ## Install (prebuilt)
 
 1. Open the latest release: **[Releases](https://github.com/yazydzhi/InfiniWake/releases/latest)**
-2. Download **`InfiniWake-1.1.0.dmg`** (preferred) or **`InfiniWake-1.1.0.zip`**
+2. Download **`InfiniWake-1.1.1.dmg`** (preferred) or **`InfiniWake-1.1.1.zip`**  
+   (universal: works on Apple Silicon and Intel Macs)
 3. **DMG:** open the disk image → drag **InfiniWake** onto **Applications** → eject the volume  
    **ZIP:** unzip and drag **`InfiniWake.app`** into **`/Applications`**
 4. Open **InfiniWake** from Applications (first launch: right-click → Open, or allow in **Privacy & Security** if Gatekeeper blocks an ad-hoc signed build)
@@ -121,9 +123,11 @@ Optional closed-lid helper:
 Build a drag-to-Applications DMG (requires [`create-dmg`](https://github.com/create-dmg/create-dmg): `brew install create-dmg`):
 
 ```bash
-./scripts/build-dmg.sh 1.1.0
-# → dist/InfiniWake-1.1.0.dmg
+./scripts/build-dmg.sh 1.1.1
+# → dist/InfiniWake-1.1.1.dmg (universal)
 ```
+
+`build-app.sh` produces a **universal** binary (`arm64` + `x86_64`) via `lipo`.
 ---
 
 ## Uninstall

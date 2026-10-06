@@ -3,8 +3,8 @@ import Foundation
 /// Версия и метаданные приложения.
 enum AppInfo {
     static let name = "InfiniWake"
-    static let version = "1.1.0"
-    static let build = "2"
+    static let version = "1.1.1"
+    static let build = "3"
     static let creatorName = "Владимир Языджи"
     static let creatorNameEN = "Vladimir Yazydzhi"
     static let creatorHandle = "azg"
