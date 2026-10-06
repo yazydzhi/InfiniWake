@@ -1,4 +1,5 @@
 import AppKit
+import Carbon
 import ServiceManagement
 
 /// Центральный контроллер: состояние keep-awake, LED, хоткей, таймер, UI.
@@ -21,6 +22,10 @@ final class InfiniWakeController {
     /// Держит процесс «живым», иначе App Nap глушит таймер LED.
     private var keepAliveActivity: NSObjectProtocol?
     private var wakeObservers: [NSObjectProtocol] = []
+    private var inputSourceObserver: NSObjectProtocol?
+    /// Capsomnia: после смены раскладки Caps Lock гасится — recovery с задержками.
+    private var inputSourceRecoveryWorkItem: DispatchWorkItem?
+    private var lastCapsLockKeyReassertAt: Date = .distantPast
 
     init() {
         settings = InfiniWakeSettings.load()
@@ -39,17 +44,21 @@ final class InfiniWakeController {
         hotKey.onToggle = { [weak self] in self?.toggle() }
         hotKey.register(keyCode: settings.hotkeyKeyCode, modifiers: settings.hotkeyModifiers)
 
+        // Karabiner иначе держит физическую лампу Off при software Caps Lock ON
+        _ = KarabinerCapsLockLEDFix.ensureBuiltInKeyboardLEDPassthrough()
+
         capsFilter.onCapsLockKey = { [weak self] in
-            self?.reassertCapsLockLED(reason: "capsLockKey")
+            self?.scheduleInputSourceLEDRecovery(reason: "capsLockKey")
         }
         installWakeObservers()
+        installInputSourceObserver()
 
         applyLaunchAtLogin()
         statusItem.setVisible(settings.showMenuBarIcon)
         refreshUI()
 
-        // common modes — таймер не молчит во время меню / tracking
-        let ledTimer = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in
+        // Как Capsomnia: опрос ~250 ms; смена языка гасит LED быстрее тика
+        let ledTimer = Timer(timeInterval: 0.15, repeats: true) { [weak self] _ in
             self?.syncCapsLockLED()
         }
         RunLoop.main.add(ledTimer, forMode: .common)
@@ -59,6 +68,8 @@ final class InfiniWakeController {
     func shutdown() {
         endKeepAliveActivity()
         removeWakeObservers()
+        removeInputSourceObserver()
+        inputSourceRecoveryWorkItem?.cancel()
         tickTimer?.invalidate()
         ledSyncTimer?.invalidate()
         accessibilityRetryTimer?.invalidate()
@@ -147,7 +158,7 @@ final class InfiniWakeController {
         L10n.language = AppLanguage.resolved(from: settings.language)
     }
 
-    /// LED + фильтр «не настоящий CAPS». Без Accessibility лампу не зажигаем.
+    /// LED + фильтр: глотаем Caps Lock flagsChanged (как Capsomnia), иначе система гасит лампу.
     private func applyCapsLockIndicator(active: Bool) {
         guard active, settings.useCapsLockLED else {
             accessibilityRetryTimer?.invalidate()
@@ -157,14 +168,14 @@ final class InfiniWakeController {
             return
         }
 
+        reassertCapsLockLED(reason: "enable")
+
         // Не вызываем системный prompt на каждый toggle — из‑за этого был цикл запросов.
         if tryActivateCapsLockFilter() {
             return
         }
 
-        // Keep-awake остаётся; лампу не жжём без фильтра. Диалог — максимум раз за сессию.
-        capsFilter.setFilteringEnabled(false)
-        _ = capsLED.setOn(false)
+        // Keep-awake + LED остаются; без фильтра система может гасить лампу — ретраим Accessibility.
         startAccessibilityRetryLoop()
         if !didShowAccessibilityAlertThisSession {
             didShowAccessibilityAlertThisSession = true
@@ -172,14 +183,14 @@ final class InfiniWakeController {
         }
     }
 
-    /// Пытается поставить CGEvent-фильтр и зажечь LED.
+    /// Ставит CGEvent-фильтр. true = tap готов. LED зажигается отдельно.
     @discardableResult
     private func tryActivateCapsLockFilter() -> Bool {
+        _ = capsLED.forceOn()
         guard capsFilter.isTrusted, capsFilter.ensureTapInstalled() else {
             return false
         }
         capsFilter.setFilteringEnabled(true)
-        _ = capsLED.setOn(true)
         accessibilityRetryTimer?.invalidate()
         accessibilityRetryTimer = nil
         return true
@@ -260,22 +271,59 @@ final class InfiniWakeController {
         reassertCapsLockLED(reason: "sync")
     }
 
-    /// Перезажигает LED. Не смотрим только на isOn(): лампа может быть тухлой при «включённом» state.
+    /// После смены раскладки (Caps Lock = язык) macOS гасит lock — как Capsomnia recovery.
+    private func scheduleInputSourceLEDRecovery(reason: String) {
+        guard settings.useCapsLockLED, isEnabled else { return }
+        if reason == "capsLockKey" {
+            let now = Date()
+            guard now.timeIntervalSince(lastCapsLockKeyReassertAt) > 0.2 else { return }
+            lastCapsLockKeyReassertAt = now
+        }
+
+        inputSourceRecoveryWorkItem?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.isEnabled else { return }
+            self.reassertCapsLockLED(reason: "inputSource")
+            // Повтор: система иногда гасит LED с задержкой после TIS notify
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
+                self?.reassertCapsLockLED(reason: "inputSource")
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+                self?.reassertCapsLockLED(reason: "inputSource")
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) { [weak self] in
+                self?.reassertCapsLockLED(reason: "inputSource")
+            }
+        }
+        inputSourceRecoveryWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: work)
+    }
+
+    /// Перезажигает LED. Не зависит от Accessibility.
     private func reassertCapsLockLED(reason: String) {
         guard settings.useCapsLockLED, isEnabled else { return }
-        guard capsFilter.isTrusted, capsFilter.ensureTapInstalled() else { return }
-        capsFilter.setFilteringEnabled(true)
-        _ = capsLED.setOn(true)
-        // На части Mac после Caps Lock / sleep state «догоняет» с задержкой
-        if reason == "capsLockKey" || reason == "wake" {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-                guard let self, self.isEnabled else { return }
-                _ = self.capsLED.setOn(true)
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-                guard let self, self.isEnabled else { return }
-                _ = self.capsLED.setOn(true)
-            }
+        if capsFilter.isTrusted {
+            _ = capsFilter.ensureTapInstalled()
+            capsFilter.setFilteringEnabled(true)
+        }
+
+        if reason == "enable" {
+            _ = capsLED.forceOn()
+            return
+        }
+
+        // Смена языка / wake / Caps Lock — всегда пишем on (система только что погасила)
+        if reason == "inputSource"
+            || reason == "capsLockKey"
+            || reason == "wake"
+            || reason.hasPrefix("afterDisplay") {
+            _ = capsLED.setOn(true, verify: false)
+            return
+        }
+
+        // sync/tick: только если погасла
+        if !capsLED.isOn() {
+            _ = capsLED.setOn(true, verify: false)
         }
     }
 
@@ -306,7 +354,6 @@ final class InfiniWakeController {
             }
             wakeObservers.append(token)
         }
-        // Пробуждение дисплея / смена экранов
         let nc = NotificationCenter.default
         let displayToken = nc.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
@@ -316,6 +363,25 @@ final class InfiniWakeController {
             self?.reassertCapsLockLED(reason: "wake")
         }
         wakeObservers.append(displayToken)
+    }
+
+    private func installInputSourceObserver() {
+        removeInputSourceObserver()
+        let name = Notification.Name(kTISNotifySelectedKeyboardInputSourceChanged as String)
+        inputSourceObserver = DistributedNotificationCenter.default().addObserver(
+            forName: name,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.scheduleInputSourceLEDRecovery(reason: "inputSource")
+        }
+    }
+
+    private func removeInputSourceObserver() {
+        if let inputSourceObserver {
+            DistributedNotificationCenter.default().removeObserver(inputSourceObserver)
+            self.inputSourceObserver = nil
+        }
     }
 
     private func removeWakeObservers() {

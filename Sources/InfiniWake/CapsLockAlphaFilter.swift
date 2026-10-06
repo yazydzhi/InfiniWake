@@ -2,17 +2,15 @@ import AppKit
 import ApplicationServices
 import Carbon.HIToolbox
 
-/// Убирает настоящий Caps Lock из ввода, пока InfiniWake держит LED как индикатор.
-/// Требует разрешение Accessibility. Не логирует нажатия.
+/// Убирает настоящий CAPS (alphaShift). Caps Lock flagsChanged НЕ глотаем:
+/// при Karabiner LED зажигается по этому событию; InfiniWake тоглится F4, не Caps Lock.
 final class CapsLockAlphaFilter {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var isTapInstalled = false
-
-    /// Фильтр активен только когда keep-awake + LED.
     private var shouldFilter = false
 
-    /// Вызывается при нажатии Caps Lock (смена языка) — чтобы сразу перезажечь LED.
+    /// Физический Caps Lock — снаружи debounce + reassert LED.
     var onCapsLockKey: (() -> Void)?
 
     var isTrusted: Bool {
@@ -20,7 +18,7 @@ final class CapsLockAlphaFilter {
     }
 
     var isTapReady: Bool {
-        isTapInstalled
+        isTapInstalled && (eventTap.map { CGEvent.tapIsEnabled(tap: $0) } ?? false)
     }
 
     func openAccessibilitySettings() {
@@ -59,9 +57,10 @@ final class CapsLockAlphaFilter {
 
     @discardableResult
     func ensureTapInstalled() -> Bool {
-        if isTapInstalled {
+        if isTapReady {
             return true
         }
+        tearDownTap()
         guard AXIsProcessTrusted() else {
             return false
         }
@@ -95,13 +94,14 @@ final class CapsLockAlphaFilter {
             CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
         }
         CGEvent.tapEnable(tap: tap, enable: true)
-        isTapInstalled = true
-        return true
+        isTapInstalled = CGEvent.tapIsEnabled(tap: tap)
+        return isTapInstalled
     }
 
     private func tearDownTap() {
         if let eventTap {
             CGEvent.tapEnable(tap: eventTap, enable: false)
+            CFMachPortInvalidate(eventTap)
         }
         if let runLoopSource {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
@@ -123,26 +123,20 @@ final class CapsLockAlphaFilter {
             return Unmanaged.passUnretained(event)
         }
 
-        let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-
-        if keyCode == Int64(kVK_CapsLock) {
-            if type == .flagsChanged {
-                var flags = event.flags
-                flags.remove(.maskAlphaShift)
-                event.flags = flags
-            }
-            // Caps Lock для языка погасит LED — сразу просим контроллер зажечь снова
-            DispatchQueue.main.async { [weak self] in
-                self?.onCapsLockKey?()
-            }
-            return Unmanaged.passUnretained(event)
-        }
-
+        // CAPS-ввод off, но flagsChanged Caps Lock пропускаем — иначе Karabiner гасит LED.
         var flags = event.flags
         if flags.contains(.maskAlphaShift) {
             flags.remove(.maskAlphaShift)
             event.flags = flags
         }
+
+        let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
+        if keyCode == Int64(kVK_CapsLock), type == .flagsChanged || type == .keyDown {
+            DispatchQueue.main.async { [weak self] in
+                self?.onCapsLockKey?()
+            }
+        }
+
         return Unmanaged.passUnretained(event)
     }
 }
