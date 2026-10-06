@@ -15,9 +15,13 @@ final class InfiniWakeController {
     private var deadline: Date?
     private var tickTimer: Timer?
     private var ledSyncTimer: Timer?
+    /// Не спамить диалогом Accessibility при каждом toggle.
+    private var didShowAccessibilityAlertThisSession = false
+    private var accessibilityRetryTimer: Timer?
 
     init() {
         settings = InfiniWakeSettings.load()
+        applyLanguage()
     }
 
     func start() {
@@ -45,6 +49,7 @@ final class InfiniWakeController {
     func shutdown() {
         tickTimer?.invalidate()
         ledSyncTimer?.invalidate()
+        accessibilityRetryTimer?.invalidate()
         capsFilter.stop()
         if isEnabled {
             _ = sleepGuard.disable()
@@ -67,9 +72,8 @@ final class InfiniWakeController {
         guard !isEnabled else { return }
         guard sleepGuard.enable() else {
             showAlert(
-                title: "InfiniWake",
-                message: sleepGuard.lastError
-                    ?? "Не удалось включить keep-awake. Установи helper для закрытой крышки (см. README)."
+                title: AppInfo.name,
+                message: sleepGuard.lastError ?? L10n.enableFailed
             )
             refreshUI()
             return
@@ -101,6 +105,7 @@ final class InfiniWakeController {
         let wasEnabled = isEnabled
         settings = newSettings
         settings.save()
+        applyLanguage()
 
         hotKey.register(keyCode: settings.hotkeyKeyCode, modifiers: settings.hotkeyModifiers)
         statusItem.setVisible(settings.showMenuBarIcon)
@@ -112,47 +117,79 @@ final class InfiniWakeController {
         } else {
             applyCapsLockIndicator(active: false)
         }
+        // Пересоздаём окно настроек, чтобы подтянуть новый язык при следующем открытии
+        settingsWindow = nil
         refreshUI()
+    }
+
+    private func applyLanguage() {
+        L10n.language = AppLanguage.resolved(from: settings.language)
     }
 
     /// LED + фильтр «не настоящий CAPS». Без Accessibility лампу не зажигаем.
     private func applyCapsLockIndicator(active: Bool) {
         guard active, settings.useCapsLockLED else {
+            accessibilityRetryTimer?.invalidate()
+            accessibilityRetryTimer = nil
             capsFilter.setFilteringEnabled(false)
             _ = capsLED.setOn(false)
             return
         }
 
-        if !capsFilter.isTrusted {
-            _ = capsFilter.requestTrustIfNeeded()
-        }
-
-        if capsFilter.ensureTapInstalled() {
-            capsFilter.setFilteringEnabled(true)
-            _ = capsLED.setOn(true)
+        // Не вызываем системный prompt на каждый toggle — из‑за этого был цикл запросов.
+        if tryActivateCapsLockFilter() {
             return
         }
 
-        // Без Accessibility нельзя безопасно держать LED — будет настоящий CAPS
+        // Keep-awake остаётся; лампу не жжём без фильтра. Диалог — максимум раз за сессию.
         capsFilter.setFilteringEnabled(false)
         _ = capsLED.setOn(false)
-        showAccessibilityAlert()
+        startAccessibilityRetryLoop()
+        if !didShowAccessibilityAlertThisSession {
+            didShowAccessibilityAlertThisSession = true
+            showAccessibilityAlert()
+        }
+    }
+
+    /// Пытается поставить CGEvent-фильтр и зажечь LED.
+    @discardableResult
+    private func tryActivateCapsLockFilter() -> Bool {
+        guard capsFilter.isTrusted, capsFilter.ensureTapInstalled() else {
+            return false
+        }
+        capsFilter.setFilteringEnabled(true)
+        _ = capsLED.setOn(true)
+        accessibilityRetryTimer?.invalidate()
+        accessibilityRetryTimer = nil
+        return true
+    }
+
+    /// После выдачи доступа macOS часто требует перезапуск; пока ждём — тихо ретраим.
+    private func startAccessibilityRetryLoop() {
+        accessibilityRetryTimer?.invalidate()
+        accessibilityRetryTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            guard let self, self.isEnabled, self.settings.useCapsLockLED else { return }
+            if self.tryActivateCapsLockFilter() {
+                self.refreshUI()
+            }
+        }
     }
 
     private func showAccessibilityAlert() {
         let alert = NSAlert()
-        alert.messageText = "InfiniWake: нужен доступ Accessibility"
-        alert.informativeText = """
-        Чтобы лампа Caps Lock горела без настоящего CAPS-ввода, разреши InfiniWake в \
-        Системные настройки → Конфиденциальность и безопасность → Универсальный доступ.
-
-        Keep-awake уже включён; лампа заработает после выдачи доступа (включи режим ещё раз).
-        """
+        alert.messageText = L10n.accessibilityTitle
+        alert.informativeText = L10n.accessibilityBody
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "Открыть настройки")
-        alert.addButton(withTitle: "Позже")
-        if alert.runModal() == .alertFirstButtonReturn {
+        alert.addButton(withTitle: L10n.openSettingsButton)
+        alert.addButton(withTitle: L10n.quitAndRestartButton)
+        alert.addButton(withTitle: L10n.laterButton)
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
             capsFilter.openAccessibilitySettings()
+            // Один системный prompt — только по кнопке, не на каждый toggle
+            _ = capsFilter.promptSystemTrustDialogOnce()
+        } else if response == .alertSecondButtonReturn {
+            NSApp.terminate(nil)
         }
     }
 
@@ -208,9 +245,11 @@ final class InfiniWakeController {
     private func refreshUI() {
         let remaining: String
         if !isEnabled {
-            remaining = settings.autoOffMinutes == 0 ? "∞" : formatRemaining(TimeInterval(settings.autoOffMinutes * 60))
+            remaining = settings.autoOffMinutes == 0
+                ? "∞"
+                : L10n.formatRemaining(TimeInterval(settings.autoOffMinutes * 60))
         } else if let deadline {
-            remaining = formatRemaining(deadline.timeIntervalSinceNow)
+            remaining = L10n.formatRemaining(deadline.timeIntervalSinceNow)
         } else {
             remaining = "∞"
         }
@@ -225,20 +264,6 @@ final class InfiniWakeController {
             ),
             helperOK: sleepGuard.hasPrivilegedHelper
         )
-    }
-
-    private func formatRemaining(_ interval: TimeInterval) -> String {
-        let total = max(0, Int(interval.rounded()))
-        let hours = total / 3600
-        let minutes = (total % 3600) / 60
-        let seconds = total % 60
-        if hours > 0 {
-            return String(format: "%d:%02d", hours, minutes)
-        }
-        if minutes > 0 {
-            return String(format: "%d:%02d", minutes, seconds)
-        }
-        return "\(seconds)с"
     }
 
     private func openSettings() {

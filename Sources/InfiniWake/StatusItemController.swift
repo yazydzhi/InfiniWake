@@ -68,7 +68,7 @@ final class StatusItemController {
             title = remainingText
             alpha = 1.0
         } else if autoOffMinutes > 0 {
-            title = formatMinutes(autoOffMinutes)
+            title = L10n.formatMinutes(autoOffMinutes)
             alpha = 0.35
         } else {
             title = "∞"
@@ -78,16 +78,14 @@ final class StatusItemController {
         let image = Self.makeIcon(text: title, alpha: alpha, emphasized: isEnabled)
         button.image = image
         button.imagePosition = .imageOnly
-        button.toolTip = isEnabled
-            ? "InfiniWake: не засыпать (\(remainingText)). Клик — выкл. ПКМ — меню."
-            : "InfiniWake: sleep как обычно. Клик — вкл. ПКМ — меню."
+        button.toolTip = isEnabled ? L10n.tooltipOn(remaining: remainingText) : L10n.tooltipOff()
     }
 
     private func rebuildMenu() {
         menu.removeAllItems()
 
         let state = NSMenuItem(
-            title: isEnabled ? "Состояние: включено (\(remainingText))" : "Состояние: выключено",
+            title: isEnabled ? L10n.stateOn(remaining: remainingText) : L10n.stateOff,
             action: nil,
             keyEquivalent: ""
         )
@@ -95,7 +93,7 @@ final class StatusItemController {
         menu.addItem(state)
 
         let toggle = NSMenuItem(
-            title: isEnabled ? "Выключить" : "Включить",
+            title: isEnabled ? L10n.turnOff : L10n.turnOn,
             action: #selector(toggleClicked),
             keyEquivalent: ""
         )
@@ -104,12 +102,12 @@ final class StatusItemController {
 
         menu.addItem(NSMenuItem.separator())
 
-        let timerHeader = NSMenuItem(title: "Авто-выключение", action: nil, keyEquivalent: "")
+        let timerHeader = NSMenuItem(title: L10n.autoOff, action: nil, keyEquivalent: "")
         timerHeader.isEnabled = false
         menu.addItem(timerHeader)
 
         for minutes in [0, 15, 30, 60, 120, 240, 480] {
-            let title = minutes == 0 ? "∞ бесконечно" : formatMinutes(minutes)
+            let title = minutes == 0 ? L10n.unlimited : L10n.formatMinutes(minutes)
             let item = NSMenuItem(title: title, action: #selector(autoOffClicked(_:)), keyEquivalent: "")
             item.target = self
             item.tag = minutes
@@ -119,16 +117,12 @@ final class StatusItemController {
 
         menu.addItem(NSMenuItem.separator())
 
-        let hotkey = NSMenuItem(
-            title: "Хоткей: \(hotkeyTitle)",
-            action: nil,
-            keyEquivalent: ""
-        )
+        let hotkey = NSMenuItem(title: L10n.hotkey(hotkeyTitle), action: nil, keyEquivalent: "")
         hotkey.isEnabled = false
         menu.addItem(hotkey)
 
         let helper = NSMenuItem(
-            title: helperOK ? "Закрытая крышка: pmset OK" : "Закрытая крышка: нужен helper",
+            title: helperOK ? L10n.helperOK : L10n.helperNeeded,
             action: nil,
             keyEquivalent: ""
         )
@@ -137,12 +131,12 @@ final class StatusItemController {
 
         menu.addItem(NSMenuItem.separator())
 
-        let settings = NSMenuItem(title: "Настройки…", action: #selector(settingsClicked), keyEquivalent: ",")
+        let settings = NSMenuItem(title: L10n.settings, action: #selector(settingsClicked), keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
 
         let about = NSMenuItem(
-            title: "О \(AppInfo.name)…",
+            title: L10n.about(AppInfo.name),
             action: #selector(aboutClicked),
             keyEquivalent: ""
         )
@@ -150,7 +144,7 @@ final class StatusItemController {
         menu.addItem(about)
 
         let version = NSMenuItem(
-            title: "Версия \(AppInfo.displayVersion)",
+            title: L10n.version(AppInfo.displayVersion),
             action: nil,
             keyEquivalent: ""
         )
@@ -159,7 +153,7 @@ final class StatusItemController {
 
         menu.addItem(NSMenuItem.separator())
 
-        let quit = NSMenuItem(title: "Выйти", action: #selector(quitClicked), keyEquivalent: "q")
+        let quit = NSMenuItem(title: L10n.quit, action: #selector(quitClicked), keyEquivalent: "q")
         quit.target = self
         menu.addItem(quit)
     }
@@ -171,14 +165,6 @@ final class StatusItemController {
 
     @objc private func autoOffClicked(_ sender: NSMenuItem) {
         onSelectAutoOff?(sender.tag)
-    }
-
-    private func formatMinutes(_ minutes: Int) -> String {
-        if minutes < 60 { return "\(minutes)м" }
-        let hours = minutes / 60
-        let rem = minutes % 60
-        if rem == 0 { return "\(hours)ч" }
-        return "\(hours)ч\(rem)м"
     }
 
     private static func makeIcon(text: String, alpha: CGFloat, emphasized: Bool) -> NSImage {

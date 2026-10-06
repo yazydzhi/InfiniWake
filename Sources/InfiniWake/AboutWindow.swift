@@ -5,17 +5,7 @@ enum AboutWindow {
     static func show() {
         let alert = NSAlert()
         alert.messageText = AppInfo.name
-        alert.informativeText = """
-        Версия \(AppInfo.displayVersion)
-
-        Keep-awake для macOS: хоткей вместо Caps Lock, лампа Caps Lock как индикатор без настоящего CAPS.
-
-        Создатель: \(AppInfo.creatorName)
-        \(AppInfo.copyright)
-        Лицензия: MIT · бесплатно
-
-        \(AppInfo.websiteURL?.absoluteString ?? "")
-        """
+        alert.informativeText = L10n.aboutBody(version: AppInfo.displayVersion)
         alert.alertStyle = .informational
         if let icon = NSApp.applicationIconImage ?? NSImage(named: NSImage.applicationIconName) {
             alert.icon = icon

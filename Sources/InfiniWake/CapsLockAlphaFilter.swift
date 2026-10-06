@@ -13,24 +13,35 @@ final class CapsLockAlphaFilter {
     private var shouldFilter = false
 
     var isTrusted: Bool {
+        // Без prompt — иначе macOS снова покажет системный диалог
         AXIsProcessTrusted()
     }
 
-    /// Показать системный диалог Accessibility, если ещё не выдано.
+    var isTapReady: Bool {
+        isTapInstalled
+    }
+
+    /// Открыть настройки Privacy → Accessibility (без повторного системного prompt).
+    func openAccessibilitySettings() {
+        let urls = [
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+            "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Accessibility"
+        ]
+        for raw in urls {
+            if let url = URL(string: raw), NSWorkspace.shared.open(url) {
+                return
+            }
+        }
+    }
+
+    /// Один раз запросить системный диалог (не вызывать на каждый toggle).
     @discardableResult
-    func requestTrustIfNeeded() -> Bool {
+    func promptSystemTrustDialogOnce() -> Bool {
         if AXIsProcessTrusted() {
             return true
         }
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         return AXIsProcessTrustedWithOptions(options)
-    }
-
-    /// Открыть настройки Privacy → Accessibility.
-    func openAccessibilitySettings() {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
-            NSWorkspace.shared.open(url)
-        }
     }
 
     /// Включить/выключить фильтрацию (после установки tap).
@@ -101,7 +112,6 @@ final class CapsLockAlphaFilter {
     }
 
     private func handle(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
-        // Если tap отключили (timeout) — включить обратно
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
             if let eventTap {
                 CGEvent.tapEnable(tap: eventTap, enable: true)
@@ -115,11 +125,7 @@ final class CapsLockAlphaFilter {
 
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
 
-        // Событие самой клавиши Caps Lock пропускаем — нужна смена языка.
-        // С символов и прочих модификаторов снимаем alphaShift, чтобы не было CAPS.
         if keyCode == Int64(kVK_CapsLock) {
-            // На flagsChanged от Caps Lock тоже убираем alphaShift из флагов,
-            // чтобы система не считала «режим заглавных» активным для следующего ввода.
             if type == .flagsChanged {
                 var flags = event.flags
                 flags.remove(.maskAlphaShift)

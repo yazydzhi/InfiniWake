@@ -48,13 +48,13 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>1.1.0</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>2</string>
     <key>NSHumanReadableCopyright</key>
     <string>© 2026 Владимир Языджи</string>
     <key>CFBundleGetInfoString</key>
-    <string>InfiniWake 1.0.0 — Владимир Языджи</string>
+    <string>InfiniWake 1.1.0 — Владимир Языджи</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>LSUIElement</key>
@@ -72,6 +72,15 @@ PLIST
 # ad-hoc sign for local run
 codesign --force --deep --sign - "$APP" 2>/dev/null || true
 
-echo "✓ Готово: $APP"
-echo "  Запуск: open \"$APP\""
+# Стабильный путь: иначе каждый запуск из .build-app ломает Accessibility (новый CDHash/путь)
+INSTALL_APP="/Applications/InfiniWake.app"
+echo "→ Установка в $INSTALL_APP…"
+rm -rf "$INSTALL_APP"
+ditto "$APP" "$INSTALL_APP"
+codesign --force --deep --sign - "$INSTALL_APP" 2>/dev/null || true
+xattr -dr com.apple.quarantine "$INSTALL_APP" 2>/dev/null || true
+
+echo "✓ Готово: $INSTALL_APP"
+echo "  (копия сборки: $APP)"
+echo "  Запуск: open \"$INSTALL_APP\""
 echo "  Для закрытой крышки: $ROOT/scripts/install-helper.sh"

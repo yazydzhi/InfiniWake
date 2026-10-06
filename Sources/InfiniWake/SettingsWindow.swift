@@ -6,15 +6,21 @@ final class SettingsWindowController: NSWindowController {
     private var current: InfiniWakeSettings
     private let onSave: (InfiniWakeSettings) -> Void
 
+    private let languagePopUp = NSPopUpButton(frame: .zero, pullsDown: false)
     private let autoOffPopUp = NSPopUpButton(frame: .zero, pullsDown: false)
     private let hotkeyPopUp = NSPopUpButton(frame: .zero, pullsDown: false)
-    private let ledCheck = NSButton(
-        checkboxWithTitle: "Лампа Caps Lock (без настоящего CAPS)",
-        target: nil,
-        action: nil
-    )
-    private let iconCheck = NSButton(checkboxWithTitle: "Показывать иконку в менюбаре", target: nil, action: nil)
-    private let loginCheck = NSButton(checkboxWithTitle: "Запускать при входе в систему", target: nil, action: nil)
+    private let ledCheck = NSButton(checkboxWithTitle: "", target: nil, action: nil)
+    private let iconCheck = NSButton(checkboxWithTitle: "", target: nil, action: nil)
+    private let loginCheck = NSButton(checkboxWithTitle: "", target: nil, action: nil)
+    private let hintLabel = NSTextField(wrappingLabelWithString: "")
+    private let footerLabel = NSTextField(labelWithString: "")
+    private let saveButton = NSButton(title: "", target: nil, action: nil)
+
+    private var languageLabelRow: NSStackView?
+    private var autoOffLabelRow: NSStackView?
+    private var hotkeyLabelRow: NSStackView?
+
+    private let languageOptions: [AppLanguagePreference] = [.system, .english, .russian]
 
     private let hotkeyOptions: [(title: String, code: UInt16, modifiers: UInt32)] = [
         ("F4", UInt16(kVK_F4), 0),
@@ -33,15 +39,15 @@ final class SettingsWindowController: NSWindowController {
         self.current = settings
         self.onSave = onSave
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 420, height: 320),
+            contentRect: NSRect(x: 0, y: 0, width: 440, height: 380),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
         )
-        window.title = "\(AppInfo.name) — настройки"
         window.center()
         super.init(window: window)
         buildUI()
+        applyLocalizedTitles()
         loadValues()
     }
 
@@ -52,6 +58,7 @@ final class SettingsWindowController: NSWindowController {
 
     func updateSettings(_ settings: InfiniWakeSettings) {
         current = settings
+        applyLocalizedTitles()
         loadValues()
     }
 
@@ -71,40 +78,39 @@ final class SettingsWindowController: NSWindowController {
             stack.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20)
         ])
 
-        stack.addArrangedSubview(labeled("Авто-выключение", autoOffPopUp))
-        for minutes in autoOffOptions {
-            let title = minutes == 0 ? "∞ бесконечно" : "\(minutes) мин"
-            autoOffPopUp.addItem(withTitle: title)
+        let langRow = labeled("", languagePopUp)
+        languageLabelRow = langRow
+        stack.addArrangedSubview(langRow)
+        for option in languageOptions {
+            languagePopUp.addItem(withTitle: option.menuTitle)
         }
 
-        stack.addArrangedSubview(labeled("Клавиша включения", hotkeyPopUp))
+        let autoRow = labeled("", autoOffPopUp)
+        autoOffLabelRow = autoRow
+        stack.addArrangedSubview(autoRow)
+
+        let hotRow = labeled("", hotkeyPopUp)
+        hotkeyLabelRow = hotRow
+        stack.addArrangedSubview(hotRow)
         for option in hotkeyOptions {
             hotkeyPopUp.addItem(withTitle: option.title)
         }
 
-        ledCheck.target = self
-        iconCheck.target = self
-        loginCheck.target = self
         stack.addArrangedSubview(ledCheck)
         stack.addArrangedSubview(iconCheck)
         stack.addArrangedSubview(loginCheck)
 
-        let hint = NSTextField(wrappingLabelWithString: """
-        Caps Lock не переключает режим — только лампа. Пока лампа горит, настоящий CAPS \
-        отключён (нужен Accessibility). Смена языка через Caps Lock сохраняется. \
-        Вкл/выкл — хоткей или клик по иконке.
-        """)
-        hint.font = NSFont.systemFont(ofSize: 11)
-        hint.textColor = .secondaryLabelColor
-        stack.addArrangedSubview(hint)
+        hintLabel.font = NSFont.systemFont(ofSize: 11)
+        hintLabel.textColor = .secondaryLabelColor
+        stack.addArrangedSubview(hintLabel)
 
-        let footer = NSTextField(labelWithString: "\(AppInfo.name) \(AppInfo.displayVersion) · \(AppInfo.creatorName)")
-        footer.font = NSFont.systemFont(ofSize: 10)
-        footer.textColor = .tertiaryLabelColor
+        footerLabel.font = NSFont.systemFont(ofSize: 10)
+        footerLabel.textColor = .tertiaryLabelColor
 
-        let save = NSButton(title: "Сохранить", target: self, action: #selector(saveClicked))
-        save.keyEquivalent = "\r"
-        let buttons = NSStackView(views: [footer, NSView(), save])
+        saveButton.target = self
+        saveButton.action = #selector(saveClicked)
+        saveButton.keyEquivalent = "\r"
+        let buttons = NSStackView(views: [footerLabel, NSView(), saveButton])
         buttons.orientation = .horizontal
         buttons.alignment = .centerY
         buttons.spacing = 8
@@ -117,6 +123,44 @@ final class SettingsWindowController: NSWindowController {
         ])
     }
 
+    private func applyLocalizedTitles() {
+        window?.title = L10n.settingsTitle
+        setRowTitle(languageLabelRow, L10n.languageLabel)
+        setRowTitle(autoOffLabelRow, L10n.autoOffLabel)
+        setRowTitle(hotkeyLabelRow, L10n.hotkeyLabel)
+
+        let selectedLang = languagePopUp.indexOfSelectedItem
+        languagePopUp.removeAllItems()
+        for option in languageOptions {
+            languagePopUp.addItem(withTitle: option.menuTitle)
+        }
+        if selectedLang >= 0 {
+            languagePopUp.selectItem(at: selectedLang)
+        }
+
+        let selectedAuto = autoOffPopUp.indexOfSelectedItem
+        autoOffPopUp.removeAllItems()
+        for minutes in autoOffOptions {
+            let title = minutes == 0 ? L10n.unlimited : L10n.minutesLabel(minutes)
+            autoOffPopUp.addItem(withTitle: title)
+        }
+        if selectedAuto >= 0 {
+            autoOffPopUp.selectItem(at: selectedAuto)
+        }
+
+        ledCheck.title = L10n.ledCheckbox
+        iconCheck.title = L10n.iconCheckbox
+        loginCheck.title = L10n.loginCheckbox
+        hintLabel.stringValue = L10n.settingsHint
+        saveButton.title = L10n.save
+        footerLabel.stringValue = "\(AppInfo.name) \(AppInfo.displayVersion) · \(AppInfo.localizedCreator)"
+    }
+
+    private func setRowTitle(_ row: NSStackView?, _ title: String) {
+        guard let label = row?.arrangedSubviews.first as? NSTextField else { return }
+        label.stringValue = title
+    }
+
     private func labeled(_ title: String, _ control: NSView) -> NSStackView {
         let label = NSTextField(labelWithString: title)
         label.font = NSFont.boldSystemFont(ofSize: 12)
@@ -125,11 +169,17 @@ final class SettingsWindowController: NSWindowController {
         row.alignment = .leading
         row.spacing = 4
         control.translatesAutoresizingMaskIntoConstraints = false
-        control.widthAnchor.constraint(greaterThanOrEqualToConstant: 200).isActive = true
+        control.widthAnchor.constraint(greaterThanOrEqualToConstant: 220).isActive = true
         return row
     }
 
     private func loadValues() {
+        if let idx = languageOptions.firstIndex(of: current.language) {
+            languagePopUp.selectItem(at: idx)
+        } else {
+            languagePopUp.selectItem(at: 0)
+        }
+
         if let idx = autoOffOptions.firstIndex(of: current.autoOffMinutes) {
             autoOffPopUp.selectItem(at: idx)
         } else {
@@ -151,6 +201,9 @@ final class SettingsWindowController: NSWindowController {
 
     @objc private func saveClicked() {
         var updated = current
+        let langIdx = max(0, languagePopUp.indexOfSelectedItem)
+        updated.language = languageOptions[langIdx]
+
         let autoIdx = max(0, autoOffPopUp.indexOfSelectedItem)
         updated.autoOffMinutes = autoOffOptions[autoIdx]
 
