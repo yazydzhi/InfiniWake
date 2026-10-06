@@ -3,12 +3,12 @@
 **Free · MIT License** · macOS menu-bar keep-awake utility
 
 **Version 1.1.2** · Author: **Vladimir Yazydzhi** (Владимир Языджи)  
-**Universal binary** — Apple Silicon (arm64) and Intel (x86_64).
+**Universal binary** — arm64 and x86_64.
 
 InfiniWake keeps your Mac awake with a dedicated hotkey (default **F4**).  
-Caps Lock is used only as a **physical LED indicator** — not as the toggle — so it stays free for input-source switching. While the LED is on, real CAPS typing is filtered out (Accessibility required).
+Caps Lock can be used as a **physical LED indicator** or as the toggle (optional in Settings). While keep-awake is on with LED mode, real CAPS typing is filtered out (Accessibility required).
 
-If **Karabiner-Elements** is installed, InfiniWake disables Caps Lock LED manipulation for the built-in keyboard (so the physical light can stay on). A backup is written to `~/.config/karabiner/karabiner.json.bak-infiniwake`.
+If a third-party keyboard driver remaps Caps Lock LED control, InfiniWake may adjust local LED settings for the built-in keyboard so the physical light can stay on (a backup of that config is written next to it when changed).
 
 UI languages: **English** / **Русский** (auto from system language, or choose in Settings).
 
@@ -17,7 +17,7 @@ UI languages: **English** / **Русский** (auto from system language, or ch
 ## Install (prebuilt)
 
 1. Open the latest release: **[Releases](https://github.com/yazydzhi/InfiniWake/releases/latest)**
-2. Download **`InfiniWake-1.1.2.dmg`** (universal: Apple Silicon and Intel)
+2. Download **`InfiniWake-1.1.2.dmg`** (universal: arm64 + x86_64)
 3. Open the disk image → drag **InfiniWake** onto **Applications** → eject the volume
 4. Open **InfiniWake** from Applications (first launch: right-click → Open, or allow in **Privacy & Security** if Gatekeeper blocks an ad-hoc signed build)
 5. You should see **∞** in the menu bar
@@ -57,7 +57,7 @@ macOS applies Accessibility only after the app restarts. Keep-awake itself works
 ### 2. Hotkey
 
 Default toggle key: **F4**.  
-Change it in **Settings** (right-click menu bar icon → Settings): F4–F8, ⌃F4, ⌥F4, ⌘⇧L.
+Change it in **Settings** (right-click menu bar icon → Settings): Caps Lock, F1–F12, and common shortcuts.
 
 ### 3. Language
 
@@ -81,24 +81,13 @@ Optional checkbox in Settings.
 
 | Action | How |
 |--------|-----|
-| Toggle keep-awake | **F4** or left-click menu bar icon |
+| Toggle keep-awake | Hotkey (default **F4**) or left-click menu bar icon |
 | Menu (timer, settings, about) | Right-click (or ⌃-click) the icon |
 | Status on + ∞ | Caps Lock LED on, menu bar shows `∞` |
 | Status on + timer | LED on, menu bar shows remaining time |
 | Status off | LED off, menu bar shows dimmed `∞` / preset |
 
-Caps Lock does **not** control InfiniWake. You can keep using it for input-source switching; InfiniWake only drives the LED and strips CAPS from typing while the LED is on.
-
----
-
-## Why not Capsomnia?
-
-| | Capsomnia | InfiniWake |
-|---|---|---|
-| Toggle | Caps Lock (or shortcut still coupled to Caps Lock state) | Hotkey (**F4**) or menu-bar click |
-| Caps Lock LED | Mode status | Indicator only; languages keep working |
-| Menu-bar icon | Dot | **∞** / countdown / dimmed when off |
-| Focus | Many settings | Sleep on/off + status |
+Caps Lock does **not** have to control InfiniWake. By default it is only the LED indicator (language switching still works). You can optionally set Caps Lock as the toggle in Settings (ON = awake, OFF = normal sleep).
 
 ---
 

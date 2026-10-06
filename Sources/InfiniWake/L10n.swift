@@ -153,14 +153,16 @@ enum L10n {
     static var settingsHint: String {
         isRU
             ? """
-            Caps Lock не переключает режим — только лампа. Пока лампа горит, настоящий CAPS \
-            отключён (нужен Accessibility). Смена языка через Caps Lock сохраняется. \
-            Вкл/выкл — хоткей или клик по иконке.
+            Если хоткей — Caps Lock: ON держит Mac awake, OFF возвращает сон; \
+            смена языка через Caps Lock в этом режиме недоступна. \
+            Для остальных клавиш Caps Lock остаётся лампой/языком; настоящий CAPS при активном \
+            режиме отключён (нужен Accessibility).
             """
             : """
-            Caps Lock does not toggle the mode — LED only. While the LED is on, real CAPS \
-            typing is blocked (Accessibility required). Caps Lock language switching still works. \
-            Toggle with the hotkey or by clicking the icon.
+            Caps Lock as hotkey: ON keeps the Mac awake, OFF restores sleep; \
+            Caps Lock language switching is unavailable in that mode. \
+            For other hotkeys, Caps Lock stays LED/language; real CAPS typing is blocked while \
+            keep-awake is on (Accessibility required).
             """
     }
 
