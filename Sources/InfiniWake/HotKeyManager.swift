@@ -1,13 +1,22 @@
 import AppKit
 import Carbon.HIToolbox
 
-/// Глобальный хоткей без зависимости от Caps Lock.
+/// Глобальный хоткей. Caps Lock — через мониторинг lock-состояния (Carbon hotkey его не ловит).
 final class HotKeyManager {
     private var hotKeyRef: EventHotKeyRef?
     private var eventHandler: EventHandlerRef?
-    var onToggle: (() -> Void)?
+    private var capsLockMonitor: Any?
+    private var capsLockLocalMonitor: Any?
+    private var capsLockPollTimer: Timer?
+    private var lastCapsLockOn: Bool?
+    private var isCapsLockMode = false
 
-    private let hotKeyID = EventHotKeyID(signature: OSType(0x49574B48), id: 1) // 'KLTK'
+    /// Обычный хоткей (F4 и т.п.) — toggle.
+    var onToggle: (() -> Void)?
+    /// Caps Lock: ON → true (включить keep-awake), OFF → false.
+    var onCapsLockFollow: ((Bool) -> Void)?
+
+    private let hotKeyID = EventHotKeyID(signature: OSType(0x49574B48), id: 1) // 'IWKH'
 
     deinit {
         unregister()
@@ -16,6 +25,32 @@ final class HotKeyManager {
     func register(keyCode: UInt16, modifiers: UInt32) {
         unregister()
 
+        if Int(keyCode) == kVK_CapsLock && modifiers == 0 {
+            isCapsLockMode = true
+            startCapsLockMonitoring()
+            return
+        }
+
+        isCapsLockMode = false
+        registerCarbonHotKey(keyCode: keyCode, modifiers: modifiers)
+    }
+
+    func unregister() {
+        stopCapsLockMonitoring()
+        isCapsLockMode = false
+        if let hotKeyRef {
+            UnregisterEventHotKey(hotKeyRef)
+            self.hotKeyRef = nil
+        }
+        if let eventHandler {
+            RemoveEventHandler(eventHandler)
+            self.eventHandler = nil
+        }
+    }
+
+    var usesCapsLock: Bool { isCapsLockMode }
+
+    private func registerCarbonHotKey(keyCode: UInt16, modifiers: UInt32) {
         var eventType = EventTypeSpec(
             eventClass: OSType(kEventClassKeyboard),
             eventKind: UInt32(kEventHotKeyPressed)
@@ -69,19 +104,64 @@ final class HotKeyManager {
         }
     }
 
-    func unregister() {
-        if let hotKeyRef {
-            UnregisterEventHotKey(hotKeyRef)
-            self.hotKeyRef = nil
+    private func startCapsLockMonitoring() {
+        let capsCode = UInt16(kVK_CapsLock)
+        capsLockMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+            guard event.keyCode == capsCode else { return }
+            DispatchQueue.main.async {
+                self?.handleCapsLockFlagsChanged()
+            }
         }
-        if let eventHandler {
-            RemoveEventHandler(eventHandler)
-            self.eventHandler = nil
+        capsLockLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+            if event.keyCode == capsCode {
+                self?.handleCapsLockFlagsChanged()
+            }
+            return event
         }
+
+        // Страховка: poll HID — flagsChanged иногда теряется
+        let timer = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in
+            self?.pollCapsLockState()
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        capsLockPollTimer = timer
+        pollCapsLockState(forceNotify: true)
+    }
+
+    private func stopCapsLockMonitoring() {
+        if let capsLockMonitor {
+            NSEvent.removeMonitor(capsLockMonitor)
+            self.capsLockMonitor = nil
+        }
+        if let capsLockLocalMonitor {
+            NSEvent.removeMonitor(capsLockLocalMonitor)
+            self.capsLockLocalMonitor = nil
+        }
+        capsLockPollTimer?.invalidate()
+        capsLockPollTimer = nil
+        lastCapsLockOn = nil
+    }
+
+    private func handleCapsLockFlagsChanged() {
+        // Небольшая задержка: HID-состояние обновляется после flagsChanged
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            self?.pollCapsLockState()
+        }
+    }
+
+    private func pollCapsLockState(forceNotify: Bool = false) {
+        guard isCapsLockMode else { return }
+        let on = CapsLockLED.sharedQuickRead()
+        if !forceNotify, lastCapsLockOn == on { return }
+        lastCapsLockOn = on
+        onCapsLockFollow?(on)
     }
 
     /// Человекочитаемое имя клавиши для меню.
     static func displayName(keyCode: UInt16, modifiers: UInt32) -> String {
+        if let option = HotKeyOption.matching(keyCode: keyCode, modifiers: modifiers) {
+            return option.title
+        }
         var parts: [String] = []
         if modifiers & UInt32(cmdKey) != 0 { parts.append("⌘") }
         if modifiers & UInt32(shiftKey) != 0 { parts.append("⇧") }
@@ -93,6 +173,7 @@ final class HotKeyManager {
 
     static func keyName(for keyCode: UInt16) -> String {
         switch Int(keyCode) {
+        case kVK_CapsLock: return "Caps Lock"
         case kVK_F1: return "F1"
         case kVK_F2: return "F2"
         case kVK_F3: return "F3"
@@ -106,6 +187,7 @@ final class HotKeyManager {
         case kVK_F11: return "F11"
         case kVK_F12: return "F12"
         case kVK_Space: return "Space"
+        case kVK_Escape: return "Esc"
         case kVK_ANSI_A: return "A"
         case kVK_ANSI_B: return "B"
         case kVK_ANSI_C: return "C"

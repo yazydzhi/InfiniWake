@@ -3,7 +3,7 @@ import ApplicationServices
 import Carbon.HIToolbox
 
 /// Убирает настоящий CAPS (alphaShift). Caps Lock flagsChanged НЕ глотаем:
-/// при Karabiner LED зажигается по этому событию; InfiniWake тоглится F4, не Caps Lock.
+/// иначе сторонние драйверы/система часто гасят LED; InfiniWake тоглится хоткеем, не Caps Lock.
 final class CapsLockAlphaFilter {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
@@ -123,7 +123,7 @@ final class CapsLockAlphaFilter {
             return Unmanaged.passUnretained(event)
         }
 
-        // CAPS-ввод off, но flagsChanged Caps Lock пропускаем — иначе Karabiner гасит LED.
+        // CAPS-ввод off, но flagsChanged Caps Lock пропускаем — иначе LED часто гаснет.
         var flags = event.flags
         if flags.contains(.maskAlphaShift) {
             flags.remove(.maskAlphaShift)

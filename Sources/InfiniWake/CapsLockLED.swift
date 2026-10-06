@@ -3,7 +3,7 @@ import IOKit
 import IOKit.hidsystem
 import Darwin
 
-/// Управление лампочкой Caps Lock через IOHIDSystem (как Capsomnia).
+/// Управление лампочкой Caps Lock через IOHIDSystem.
 final class CapsLockLED {
     private let lock = NSLock()
     private var connect: io_connect_t = 0
@@ -27,6 +27,13 @@ final class CapsLockLED {
         lock.lock()
         defer { lock.unlock() }
         return readStateLocked() ?? false
+    }
+
+    /// Быстрый read без экземпляра — для Caps Lock-хоткея.
+    static func sharedQuickRead() -> Bool {
+        guard let connection = CapsLockHID.openConnection() else { return false }
+        defer { IOServiceClose(connection) }
+        return CapsLockHID.readState(connection: connection) ?? false
     }
 
     /// Быстрый set без verify — для тика / recovery после смены языка.

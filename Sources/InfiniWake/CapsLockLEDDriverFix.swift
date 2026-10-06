@@ -1,11 +1,13 @@
 import Foundation
 
-/// Karabiner по умолчанию забирает Caps Lock LED на VirtualHID и не синхронизирует её
-/// с IOHIDSetModifierLockState (InfiniWake/F4). Тогда софт-Caps=ON, а лампа Off.
-/// Фикс: manipulate_caps_lock_led=false для встроенной клавиатуры.
-enum KarabinerCapsLockLEDFix {
+/// Некоторые драйверы клавиатуры забирают Caps Lock LED и не синхронизируют её
+/// с IOHIDSetModifierLockState. Тогда софт-Caps=ON, а лампа Off.
+/// Фикс: manipulate_caps_lock_led=false для встроенной клавиатуры в локальном конфиге remapper'а.
+enum CapsLockLEDDriverFix {
     private static let configURL = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent(".config/karabiner/karabiner.json")
+        .appendingPathComponent(".config")
+        .appendingPathComponent("karabiner")
+        .appendingPathComponent("karabiner.json")
     private static let logURL: URL = {
         let dir = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Logs/InfiniWake", isDirectory: true)
@@ -13,7 +15,7 @@ enum KarabinerCapsLockLEDFix {
         return dir.appendingPathComponent("led.log")
     }()
 
-    /// Идемпотентно: если Karabiner есть и LED ещё манипулируется — выключаем для built-in.
+    /// Идемпотентно: если есть конфиг remapper'а и LED манипулируется — выключаем для built-in.
     @discardableResult
     static func ensureBuiltInKeyboardLEDPassthrough() -> Bool {
         let path = configURL.path
@@ -25,7 +27,7 @@ enum KarabinerCapsLockLEDFix {
             var root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
             var profiles = root["profiles"] as? [[String: Any]]
         else {
-            log("karabiner.json parse failed")
+            log("keyboard LED config parse failed")
             return false
         }
 
@@ -58,7 +60,7 @@ enum KarabinerCapsLockLEDFix {
         }
 
         guard changed else {
-            log("karabiner LED passthrough already OK")
+            log("keyboard LED passthrough already OK")
             return true
         }
 
@@ -66,7 +68,7 @@ enum KarabinerCapsLockLEDFix {
         guard
             let out = try? JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys])
         else {
-            log("karabiner.json serialize failed")
+            log("keyboard LED config serialize failed")
             return false
         }
 
@@ -76,10 +78,10 @@ enum KarabinerCapsLockLEDFix {
         try? FileManager.default.copyItem(at: configURL, to: backup)
         do {
             try out.write(to: configURL)
-            log("karabiner: set manipulate_caps_lock_led=false for built-in keyboard")
+            log("set manipulate_caps_lock_led=false for built-in keyboard")
             return true
         } catch {
-            log("karabiner.json write failed: \(error.localizedDescription)")
+            log("keyboard LED config write failed: \(error.localizedDescription)")
             return false
         }
     }

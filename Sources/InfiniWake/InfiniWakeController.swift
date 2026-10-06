@@ -23,7 +23,7 @@ final class InfiniWakeController {
     private var keepAliveActivity: NSObjectProtocol?
     private var wakeObservers: [NSObjectProtocol] = []
     private var inputSourceObserver: NSObjectProtocol?
-    /// Capsomnia: после смены раскладки Caps Lock гасится — recovery с задержками.
+    /// После смены раскладки Caps Lock гасится — recovery с задержками.
     private var inputSourceRecoveryWorkItem: DispatchWorkItem?
     private var lastCapsLockKeyReassertAt: Date = .distantPast
 
@@ -42,13 +42,23 @@ final class InfiniWakeController {
         }
 
         hotKey.onToggle = { [weak self] in self?.toggle() }
+        hotKey.onCapsLockFollow = { [weak self] on in
+            guard let self else { return }
+            if on {
+                self.enable()
+            } else {
+                self.disable()
+            }
+        }
         hotKey.register(keyCode: settings.hotkeyKeyCode, modifiers: settings.hotkeyModifiers)
 
-        // Karabiner иначе держит физическую лампу Off при software Caps Lock ON
-        _ = KarabinerCapsLockLEDFix.ensureBuiltInKeyboardLEDPassthrough()
+        // Иначе сторонний драйвер клавиатуры может держать физическую лампу Off при soft Caps ON
+        _ = CapsLockLEDDriverFix.ensureBuiltInKeyboardLEDPassthrough()
 
         capsFilter.onCapsLockKey = { [weak self] in
-            self?.scheduleInputSourceLEDRecovery(reason: "capsLockKey")
+            // Если Caps Lock — хоткей, состояние ведёт HotKeyManager; тут только LED recovery
+            guard let self, !self.hotKey.usesCapsLock else { return }
+            self.scheduleInputSourceLEDRecovery(reason: "capsLockKey")
         }
         installWakeObservers()
         installInputSourceObserver()
@@ -57,7 +67,7 @@ final class InfiniWakeController {
         statusItem.setVisible(settings.showMenuBarIcon)
         refreshUI()
 
-        // Как Capsomnia: опрос ~250 ms; смена языка гасит LED быстрее тика
+        // Опрос LED ~150 ms; смена языка гасит LED быстрее тика
         let ledTimer = Timer(timeInterval: 0.15, repeats: true) { [weak self] _ in
             self?.syncCapsLockLED()
         }
@@ -158,7 +168,7 @@ final class InfiniWakeController {
         L10n.language = AppLanguage.resolved(from: settings.language)
     }
 
-    /// LED + фильтр: глотаем Caps Lock flagsChanged (как Capsomnia), иначе система гасит лампу.
+    /// LED + фильтр alphaShift; Caps Lock flagsChanged не глотаем — иначе лампа часто гаснет.
     private func applyCapsLockIndicator(active: Bool) {
         guard active, settings.useCapsLockLED else {
             accessibilityRetryTimer?.invalidate()
@@ -271,7 +281,7 @@ final class InfiniWakeController {
         reassertCapsLockLED(reason: "sync")
     }
 
-    /// После смены раскладки (Caps Lock = язык) macOS гасит lock — как Capsomnia recovery.
+    /// После смены раскладки (Caps Lock = язык) macOS гасит lock — recovery.
     private func scheduleInputSourceLEDRecovery(reason: String) {
         guard settings.useCapsLockLED, isEnabled else { return }
         if reason == "capsLockKey" {

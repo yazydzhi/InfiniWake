@@ -22,16 +22,7 @@ final class SettingsWindowController: NSWindowController {
 
     private let languageOptions: [AppLanguagePreference] = [.system, .english, .russian]
 
-    private let hotkeyOptions: [(title: String, code: UInt16, modifiers: UInt32)] = [
-        ("F4", UInt16(kVK_F4), 0),
-        ("F5", UInt16(kVK_F5), 0),
-        ("F6", UInt16(kVK_F6), 0),
-        ("F7", UInt16(kVK_F7), 0),
-        ("F8", UInt16(kVK_F8), 0),
-        ("⌃F4", UInt16(kVK_F4), UInt32(controlKey)),
-        ("⌥F4", UInt16(kVK_F4), UInt32(optionKey)),
-        ("⌘⇧L", UInt16(kVK_ANSI_L), UInt32(cmdKey | shiftKey))
-    ]
+    private let hotkeyOptions = HotKeyOption.all
 
     private let autoOffOptions = [0, 15, 30, 60, 120, 240, 480]
 
@@ -39,7 +30,7 @@ final class SettingsWindowController: NSWindowController {
         self.current = settings
         self.onSave = onSave
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 440, height: 380),
+            contentRect: NSRect(x: 0, y: 0, width: 460, height: 420),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -187,11 +178,16 @@ final class SettingsWindowController: NSWindowController {
         }
 
         if let idx = hotkeyOptions.firstIndex(where: {
-            $0.code == current.hotkeyKeyCode && $0.modifiers == current.hotkeyModifiers
+            $0.keyCode == current.hotkeyKeyCode && $0.modifiers == current.hotkeyModifiers
         }) {
             hotkeyPopUp.selectItem(at: idx)
         } else {
-            hotkeyPopUp.selectItem(at: 0)
+            // F4 по умолчанию, если сохранённый хоткей больше не в списке
+            if let f4 = hotkeyOptions.firstIndex(where: { $0.keyCode == UInt16(kVK_F4) && $0.modifiers == 0 }) {
+                hotkeyPopUp.selectItem(at: f4)
+            } else {
+                hotkeyPopUp.selectItem(at: 0)
+            }
         }
 
         ledCheck.state = current.useCapsLockLED ? .on : .off
@@ -208,8 +204,8 @@ final class SettingsWindowController: NSWindowController {
         updated.autoOffMinutes = autoOffOptions[autoIdx]
 
         let hotIdx = max(0, hotkeyPopUp.indexOfSelectedItem)
-        let hot = hotkeyOptions[hotIdx]
-        updated.hotkeyKeyCode = hot.code
+        let hot = hotkeyOptions[min(hotIdx, hotkeyOptions.count - 1)]
+        updated.hotkeyKeyCode = hot.keyCode
         updated.hotkeyModifiers = hot.modifiers
 
         updated.useCapsLockLED = ledCheck.state == .on

@@ -5,7 +5,7 @@ set -euo pipefail
 # Требует: create-dmg (brew install create-dmg)
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-VERSION="${1:-1.1.2}"
+VERSION="${1:-1.1.3}"
 DIST="$ROOT/dist"
 STAGE="$DIST/dmg-stage"
 APP_SRC="$ROOT/.build-app/InfiniWake.app"
