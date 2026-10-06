@@ -12,8 +12,10 @@ final class CapsLockAlphaFilter {
     /// Фильтр активен только когда keep-awake + LED.
     private var shouldFilter = false
 
+    /// Вызывается при нажатии Caps Lock (смена языка) — чтобы сразу перезажечь LED.
+    var onCapsLockKey: (() -> Void)?
+
     var isTrusted: Bool {
-        // Без prompt — иначе macOS снова покажет системный диалог
         AXIsProcessTrusted()
     }
 
@@ -21,7 +23,6 @@ final class CapsLockAlphaFilter {
         isTapInstalled
     }
 
-    /// Открыть настройки Privacy → Accessibility (без повторного системного prompt).
     func openAccessibilitySettings() {
         let urls = [
             "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
@@ -34,7 +35,6 @@ final class CapsLockAlphaFilter {
         }
     }
 
-    /// Один раз запросить системный диалог (не вызывать на каждый toggle).
     @discardableResult
     func promptSystemTrustDialogOnce() -> Bool {
         if AXIsProcessTrusted() {
@@ -44,7 +44,6 @@ final class CapsLockAlphaFilter {
         return AXIsProcessTrustedWithOptions(options)
     }
 
-    /// Включить/выключить фильтрацию (после установки tap).
     func setFilteringEnabled(_ enabled: Bool) {
         shouldFilter = enabled
         if enabled {
@@ -54,6 +53,7 @@ final class CapsLockAlphaFilter {
 
     func stop() {
         shouldFilter = false
+        onCapsLockKey = nil
         tearDownTap()
     }
 
@@ -130,6 +130,10 @@ final class CapsLockAlphaFilter {
                 var flags = event.flags
                 flags.remove(.maskAlphaShift)
                 event.flags = flags
+            }
+            // Caps Lock для языка погасит LED — сразу просим контроллер зажечь снова
+            DispatchQueue.main.async { [weak self] in
+                self?.onCapsLockKey?()
             }
             return Unmanaged.passUnretained(event)
         }

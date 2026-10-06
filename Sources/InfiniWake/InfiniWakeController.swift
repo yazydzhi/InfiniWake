@@ -18,6 +18,9 @@ final class InfiniWakeController {
     /// Не спамить диалогом Accessibility при каждом toggle.
     private var didShowAccessibilityAlertThisSession = false
     private var accessibilityRetryTimer: Timer?
+    /// Держит процесс «живым», иначе App Nap глушит таймер LED.
+    private var keepAliveActivity: NSObjectProtocol?
+    private var wakeObservers: [NSObjectProtocol] = []
 
     init() {
         settings = InfiniWakeSettings.load()
@@ -36,17 +39,26 @@ final class InfiniWakeController {
         hotKey.onToggle = { [weak self] in self?.toggle() }
         hotKey.register(keyCode: settings.hotkeyKeyCode, modifiers: settings.hotkeyModifiers)
 
+        capsFilter.onCapsLockKey = { [weak self] in
+            self?.reassertCapsLockLED(reason: "capsLockKey")
+        }
+        installWakeObservers()
+
         applyLaunchAtLogin()
         statusItem.setVisible(settings.showMenuBarIcon)
         refreshUI()
 
-        // Поддерживаем LED, пока режим включён — Caps Lock остаётся только индикатором
-        ledSyncTimer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { [weak self] _ in
+        // common modes — таймер не молчит во время меню / tracking
+        let ledTimer = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in
             self?.syncCapsLockLED()
         }
+        RunLoop.main.add(ledTimer, forMode: .common)
+        ledSyncTimer = ledTimer
     }
 
     func shutdown() {
+        endKeepAliveActivity()
+        removeWakeObservers()
         tickTimer?.invalidate()
         ledSyncTimer?.invalidate()
         accessibilityRetryTimer?.invalidate()
@@ -80,11 +92,19 @@ final class InfiniWakeController {
         }
 
         isEnabled = true
+        beginKeepAliveActivity()
         restartDeadline()
         applyCapsLockIndicator(active: true)
-        // При закрытой крышке можно гасить дисплей — работа продолжается
+        // При закрытой крышке можно гасить дисплей — работа продолжается.
+        // После displaysleep LED часто гаснет с подсветкой клавиатуры — перезажигаем с задержкой.
         if sleepGuard.activeMode == .pmset {
             sleepGuard.sleepDisplayIfNeeded()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+                self?.reassertCapsLockLED(reason: "afterDisplaySleep")
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                self?.reassertCapsLockLED(reason: "afterDisplaySleepRetry")
+            }
         }
         startTicker()
         refreshUI()
@@ -94,6 +114,7 @@ final class InfiniWakeController {
         guard isEnabled else { return }
         isEnabled = false
         deadline = nil
+        endKeepAliveActivity()
         tickTimer?.invalidate()
         tickTimer = nil
         _ = sleepGuard.disable()
@@ -212,34 +233,99 @@ final class InfiniWakeController {
 
     private func startTicker() {
         tickTimer?.invalidate()
-        tickTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.onTick()
         }
+        RunLoop.main.add(timer, forMode: .common)
+        tickTimer = timer
     }
 
     private func onTick() {
         guard isEnabled else { return }
         if let deadline, Date() >= deadline {
             disable()
-            // После таймера — явный sleep, как в Capsomnia
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")
             process.arguments = ["sleepnow"]
             try? process.run()
             return
         }
+        // Дополнительный reassert раз в секунду — страховка от App Nap / сброса HID
+        reassertCapsLockLED(reason: "tick")
         refreshUI()
     }
 
-    /// Caps Lock — только лампа. Без Accessibility лампу не трогаем (иначе будет CAPS).
-    /// Если пользователь нажал Caps Lock (смена языка) и LED погас — снова зажигаем.
+    /// Caps Lock — только лампа. Принудительно держам LED on, пока режим включён.
     private func syncCapsLockLED() {
+        reassertCapsLockLED(reason: "sync")
+    }
+
+    /// Перезажигает LED. Не смотрим только на isOn(): лампа может быть тухлой при «включённом» state.
+    private func reassertCapsLockLED(reason: String) {
         guard settings.useCapsLockLED, isEnabled else { return }
         guard capsFilter.isTrusted, capsFilter.ensureTapInstalled() else { return }
         capsFilter.setFilteringEnabled(true)
-        if !capsLED.isOn() {
-            _ = capsLED.setOn(true)
+        _ = capsLED.setOn(true)
+        // На части Mac после Caps Lock / sleep state «догоняет» с задержкой
+        if reason == "capsLockKey" || reason == "wake" {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                guard let self, self.isEnabled else { return }
+                _ = self.capsLED.setOn(true)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                guard let self, self.isEnabled else { return }
+                _ = self.capsLED.setOn(true)
+            }
         }
+    }
+
+    private func beginKeepAliveActivity() {
+        endKeepAliveActivity()
+        keepAliveActivity = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiated, .latencyCritical, .idleSystemSleepDisabled],
+            reason: "InfiniWake keep-awake and Caps Lock LED sync"
+        )
+    }
+
+    private func endKeepAliveActivity() {
+        if let keepAliveActivity {
+            ProcessInfo.processInfo.endActivity(keepAliveActivity)
+            self.keepAliveActivity = nil
+        }
+    }
+
+    private func installWakeObservers() {
+        let center = NSWorkspace.shared.notificationCenter
+        let names: [NSNotification.Name] = [
+            NSWorkspace.didWakeNotification,
+            NSWorkspace.screensDidWakeNotification
+        ]
+        for name in names {
+            let token = center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                self?.reassertCapsLockLED(reason: "wake")
+            }
+            wakeObservers.append(token)
+        }
+        // Пробуждение дисплея / смена экранов
+        let nc = NotificationCenter.default
+        let displayToken = nc.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.reassertCapsLockLED(reason: "wake")
+        }
+        wakeObservers.append(displayToken)
+    }
+
+    private func removeWakeObservers() {
+        let workspace = NSWorkspace.shared.notificationCenter
+        let local = NotificationCenter.default
+        for token in wakeObservers {
+            workspace.removeObserver(token)
+            local.removeObserver(token)
+        }
+        wakeObservers.removeAll()
     }
 
     private func refreshUI() {
