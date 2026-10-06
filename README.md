@@ -17,10 +17,8 @@ UI languages: **English** / **Русский** (auto from system language, or ch
 ## Install (prebuilt)
 
 1. Open the latest release: **[Releases](https://github.com/yazydzhi/InfiniWake/releases/latest)**
-2. Download **`InfiniWake-1.1.2.dmg`** (preferred) or **`InfiniWake-1.1.2.zip`**  
-   (universal: works on Apple Silicon and Intel Macs)
-3. **DMG:** open the disk image → drag **InfiniWake** onto **Applications** → eject the volume  
-   **ZIP:** unzip and drag **`InfiniWake.app`** into **`/Applications`**
+2. Download **`InfiniWake-1.1.2.dmg`** (universal: Apple Silicon and Intel)
+3. Open the disk image → drag **InfiniWake** onto **Applications** → eject the volume
 4. Open **InfiniWake** from Applications (first launch: right-click → Open, or allow in **Privacy & Security** if Gatekeeper blocks an ad-hoc signed build)
 5. You should see **∞** in the menu bar
 
