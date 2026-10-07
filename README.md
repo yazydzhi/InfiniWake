@@ -2,7 +2,7 @@
 
 **Free · MIT License** · macOS menu-bar keep-awake utility
 
-**Version 1.1.4** · Author: **Vladimir Yazydzhi** (Владимир Языджи)  
+**Version 1.1.5** · Author: **Vladimir Yazydzhi** (Владимир Языджи)  
 **Universal binary** — arm64 and x86_64.
 
 InfiniWake keeps your Mac awake with a dedicated hotkey (default **F4**).  
@@ -17,7 +17,7 @@ UI languages: **English** / **Русский** (auto from system language, or ch
 ## Install (prebuilt)
 
 1. Open the latest release: **[Releases](https://github.com/yazydzhi/InfiniWake/releases/latest)**
-2. Download **`InfiniWake-1.1.4.dmg`** (universal: arm64 + x86_64)
+2. Download **`InfiniWake-1.1.5.dmg`** (universal: arm64 + x86_64)
 3. Open the disk image → drag **InfiniWake** onto **Applications** → eject the volume
 4. Open **InfiniWake** from Applications (first launch: right-click → Open, or allow in **Privacy & Security** if Gatekeeper blocks an ad-hoc signed build)
 5. You should see **∞** in the menu bar
@@ -112,8 +112,8 @@ Optional closed-lid helper:
 Build a drag-to-Applications DMG (requires [`create-dmg`](https://github.com/create-dmg/create-dmg): `brew install create-dmg`):
 
 ```bash
-./scripts/build-dmg.sh 1.1.4
-# → dist/InfiniWake-1.1.4.dmg (universal)
+./scripts/build-dmg.sh 1.1.5
+# → dist/InfiniWake-1.1.5.dmg (universal)
 ```
 
 `build-app.sh` produces a **universal** binary (`arm64` + `x86_64`) via `lipo`.

@@ -5,7 +5,7 @@ set -euo pipefail
 # Требует: create-dmg (brew install create-dmg)
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-VERSION="${1:-1.1.4}"
+VERSION="${1:-1.1.5}"
 DIST="$ROOT/dist"
 STAGE="$DIST/dmg-stage"
 APP_SRC="$ROOT/.build-app/InfiniWake.app"
@@ -58,6 +58,7 @@ echo "→ Создание $DMG_PATH…"
 create-dmg "${CREATE_ARGS[@]}" "$DMG_PATH" "$STAGE"
 
 # Иногда create-dmg оставляет rw. / .temp — подчистить
+setopt NULL_GLOB 2>/dev/null || true
 rm -f "$DIST"/rw.*.InfiniWake*.dmg "$DIST"/.DS_Store 2>/dev/null || true
 rm -rf "$STAGE"
 
