@@ -26,10 +26,21 @@ final class InfiniWakeController {
     /// После смены раскладки Caps Lock гасится — recovery с задержками.
     private var inputSourceRecoveryWorkItem: DispatchWorkItem?
     private var lastCapsLockKeyReassertAt: Date = .distantPast
+    /// В поле пароля (Secure Event Input) временно гасим Caps Lock — иначе ввод «в капсе».
+    private var secureInputOverrideActive = false
+    private var nextSecureInputRetryAt = Date.distantPast
+    private lazy var secureInputFocusMonitor = SecureInputFocusMonitor { [weak self] in
+        self?.syncSecureInputCapsLockOverride(reason: "focus")
+    }
 
     init() {
         settings = InfiniWakeSettings.load()
         applyLanguage()
+    }
+
+    /// Режим держит soft Caps Lock ON (LED и/или хоткей Caps Lock).
+    private var holdsCapsLockForMode: Bool {
+        isEnabled && (settings.useCapsLockLED || hotKey.usesCapsLock)
     }
 
     func start() {
@@ -43,7 +54,7 @@ final class InfiniWakeController {
 
         hotKey.onToggle = { [weak self] in self?.toggle() }
         hotKey.onCapsLockFollow = { [weak self] on in
-            guard let self else { return }
+            guard let self, !self.secureInputOverrideActive else { return }
             if on {
                 self.enable()
             } else {
@@ -57,7 +68,7 @@ final class InfiniWakeController {
 
         capsFilter.onCapsLockKey = { [weak self] in
             // Если Caps Lock — хоткей, состояние ведёт HotKeyManager; тут только LED recovery
-            guard let self, !self.hotKey.usesCapsLock else { return }
+            guard let self, !self.hotKey.usesCapsLock, !self.secureInputOverrideActive else { return }
             self.scheduleInputSourceLEDRecovery(reason: "capsLockKey")
         }
         installWakeObservers()
@@ -67,7 +78,7 @@ final class InfiniWakeController {
         statusItem.setVisible(settings.showMenuBarIcon)
         refreshUI()
 
-        // Опрос LED ~150 ms; смена языка гасит LED быстрее тика
+        // Опрос LED / Secure Input ~150 ms
         let ledTimer = Timer(timeInterval: 0.15, repeats: true) { [weak self] _ in
             self?.syncCapsLockLED()
         }
@@ -83,6 +94,8 @@ final class InfiniWakeController {
         tickTimer?.invalidate()
         ledSyncTimer?.invalidate()
         accessibilityRetryTimer?.invalidate()
+        clearSecureInputOverride(restoreCapsLock: false)
+        secureInputFocusMonitor.stop()
         capsFilter.stop()
         if isEnabled {
             _ = sleepGuard.disable()
@@ -116,6 +129,8 @@ final class InfiniWakeController {
         beginKeepAliveActivity()
         restartDeadline()
         applyCapsLockIndicator(active: true)
+        secureInputFocusMonitor.start()
+        syncSecureInputCapsLockOverride(reason: "enable")
         // При закрытой крышке можно гасить дисплей — работа продолжается.
         // После displaysleep LED часто гаснет с подсветкой клавиатуры — перезажигаем с задержкой.
         if sleepGuard.activeMode == .pmset {
@@ -139,11 +154,14 @@ final class InfiniWakeController {
         tickTimer?.invalidate()
         tickTimer = nil
         _ = sleepGuard.disable()
+        clearSecureInputOverride(restoreCapsLock: false)
+        secureInputFocusMonitor.stop()
         applyCapsLockIndicator(active: false)
         refreshUI()
     }
 
     func applySettings(_ newSettings: InfiniWakeSettings) {
+        let languageChanged = newSettings.language != settings.language
         let wasEnabled = isEnabled
         settings = newSettings
         settings.save()
@@ -159,8 +177,10 @@ final class InfiniWakeController {
         } else {
             applyCapsLockIndicator(active: false)
         }
-        // Пересоздаём окно настроек, чтобы подтянуть новый язык при следующем открытии
-        settingsWindow = nil
+        // Окно настроек не закрываем: изменения применяются сразу; при смене языка обновляем подписи
+        if languageChanged {
+            settingsWindow?.refreshAfterLanguageChange(settings)
+        }
         refreshUI()
     }
 
@@ -276,14 +296,80 @@ final class InfiniWakeController {
         refreshUI()
     }
 
-    /// Caps Lock — только лампа. Принудительно держам LED on, пока режим включён.
+    /// Caps Lock — лампа + Secure Input override.
     private func syncCapsLockLED() {
+        syncSecureInputCapsLockOverride(reason: "sync")
+        guard !secureInputOverrideActive else { return }
         reassertCapsLockLED(reason: "sync")
+    }
+
+    /// В password/secure-полях временно OFF, иначе ввод как с Caps Lock (tap не видит события).
+    private func syncSecureInputCapsLockOverride(reason: String) {
+        guard holdsCapsLockForMode else {
+            if secureInputOverrideActive {
+                clearSecureInputOverride(restoreCapsLock: false)
+            }
+            return
+        }
+
+        let secure = SecureInputStateReader.isSecureEventInputEnabled()
+        let now = Date()
+
+        if secure {
+            if secureInputOverrideActive {
+                // Держим OFF, если кто-то снова зажёг Caps Lock
+                if capsLED.isOn(), now >= nextSecureInputRetryAt {
+                    _ = capsLED.setOn(false, verify: false)
+                    hotKey.noteExternalCapsLockState(false)
+                    nextSecureInputRetryAt = now.addingTimeInterval(0.2)
+                }
+                return
+            }
+            guard now >= nextSecureInputRetryAt else { return }
+            inputSourceRecoveryWorkItem?.cancel()
+            let ok = capsLED.setOn(false, verify: false)
+            if ok || !capsLED.isOn() {
+                secureInputOverrideActive = true
+                hotKey.noteExternalCapsLockState(false)
+                nextSecureInputRetryAt = .distantPast
+            } else {
+                nextSecureInputRetryAt = now.addingTimeInterval(0.35)
+            }
+            return
+        }
+
+        // Secure Input закончился — вернуть Caps Lock, если режим ещё on
+        guard secureInputOverrideActive else { return }
+        guard now >= nextSecureInputRetryAt else { return }
+        let ok = capsLED.setOn(true, verify: false)
+        if ok || capsLED.isOn() {
+            secureInputOverrideActive = false
+            hotKey.noteExternalCapsLockState(true)
+            nextSecureInputRetryAt = .distantPast
+            if settings.useCapsLockLED {
+                reassertCapsLockLED(reason: "secureRestore")
+            }
+        } else {
+            nextSecureInputRetryAt = now.addingTimeInterval(0.35)
+        }
+    }
+
+    private func clearSecureInputOverride(restoreCapsLock: Bool) {
+        guard secureInputOverrideActive || restoreCapsLock else {
+            secureInputOverrideActive = false
+            return
+        }
+        secureInputOverrideActive = false
+        nextSecureInputRetryAt = .distantPast
+        if restoreCapsLock, holdsCapsLockForMode {
+            _ = capsLED.setOn(true, verify: false)
+            hotKey.noteExternalCapsLockState(true)
+        }
     }
 
     /// После смены раскладки (Caps Lock = язык) macOS гасит lock — recovery.
     private func scheduleInputSourceLEDRecovery(reason: String) {
-        guard settings.useCapsLockLED, isEnabled else { return }
+        guard settings.useCapsLockLED, isEnabled, !secureInputOverrideActive else { return }
         if reason == "capsLockKey" {
             let now = Date()
             guard now.timeIntervalSince(lastCapsLockKeyReassertAt) > 0.2 else { return }
@@ -292,17 +378,20 @@ final class InfiniWakeController {
 
         inputSourceRecoveryWorkItem?.cancel()
         let work = DispatchWorkItem { [weak self] in
-            guard let self, self.isEnabled else { return }
+            guard let self, self.isEnabled, !self.secureInputOverrideActive else { return }
             self.reassertCapsLockLED(reason: "inputSource")
             // Повтор: система иногда гасит LED с задержкой после TIS notify
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
-                self?.reassertCapsLockLED(reason: "inputSource")
+                guard let self, !self.secureInputOverrideActive else { return }
+                self.reassertCapsLockLED(reason: "inputSource")
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
-                self?.reassertCapsLockLED(reason: "inputSource")
+                guard let self, !self.secureInputOverrideActive else { return }
+                self.reassertCapsLockLED(reason: "inputSource")
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) { [weak self] in
-                self?.reassertCapsLockLED(reason: "inputSource")
+                guard let self, !self.secureInputOverrideActive else { return }
+                self.reassertCapsLockLED(reason: "inputSource")
             }
         }
         inputSourceRecoveryWorkItem = work
@@ -311,7 +400,7 @@ final class InfiniWakeController {
 
     /// Перезажигает LED. Не зависит от Accessibility.
     private func reassertCapsLockLED(reason: String) {
-        guard settings.useCapsLockLED, isEnabled else { return }
+        guard settings.useCapsLockLED, isEnabled, !secureInputOverrideActive else { return }
         if capsFilter.isTrusted {
             _ = capsFilter.ensureTapInstalled()
             capsFilter.setFilteringEnabled(true)
@@ -326,6 +415,7 @@ final class InfiniWakeController {
         if reason == "inputSource"
             || reason == "capsLockKey"
             || reason == "wake"
+            || reason == "secureRestore"
             || reason.hasPrefix("afterDisplay") {
             _ = capsLED.setOn(true, verify: false)
             return
@@ -424,7 +514,8 @@ final class InfiniWakeController {
                 keyCode: settings.hotkeyKeyCode,
                 modifiers: settings.hotkeyModifiers
             ),
-            helperOK: sleepGuard.hasPrivilegedHelper
+            helperOK: sleepGuard.hasPrivilegedHelper,
+            iconStyle: settings.menuBarIconStyle
         )
     }
 

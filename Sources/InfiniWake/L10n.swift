@@ -110,16 +110,21 @@ enum L10n {
         return isRU ? "\(hours)ч\(rem)м" : "\(hours)h\(rem)m"
     }
 
+    /// Компактный остаток для менюбара: только часы/минуты, секунды — если меньше минуты.
+    /// Суффиксы: `ч`/`м`/`с` или `h`/`m`/`s`.
     static func formatRemaining(_ interval: TimeInterval) -> String {
         let total = max(0, Int(interval.rounded()))
         let hours = total / 3600
         let minutes = (total % 3600) / 60
         let seconds = total % 60
         if hours > 0 {
-            return String(format: "%d:%02d", hours, minutes)
+            if minutes > 0 {
+                return isRU ? "\(hours)ч\(minutes)м" : "\(hours)h\(minutes)m"
+            }
+            return isRU ? "\(hours)ч" : "\(hours)h"
         }
         if minutes > 0 {
-            return String(format: "%d:%02d", minutes, seconds)
+            return isRU ? "\(minutes)м" : "\(minutes)m"
         }
         return isRU ? "\(seconds)с" : "\(seconds)s"
     }
@@ -144,6 +149,21 @@ enum L10n {
 
     static var iconCheckbox: String {
         isRU ? "Показывать иконку в менюбаре" : "Show menu bar icon"
+    }
+
+    static var menuBarIconStyleLabel: String {
+        isRU ? "Значок в менюбаре" : "Menu bar icon"
+    }
+
+    static func menuBarIconStyleTitle(_ style: MenuBarIconStyle) -> String {
+        switch style {
+        case .infinity:
+            return isRU ? "∞" : "∞"
+        case .lamp:
+            return isRU ? "Лампа" : "Lamp"
+        case .infinityLamp:
+            return isRU ? "∞ + лампа" : "∞ + lamp"
+        }
     }
 
     static var loginCheckbox: String {

@@ -1,5 +1,12 @@
 import Foundation
 
+/// Стиль значка в менюбаре.
+enum MenuBarIconStyle: String, Codable, CaseIterable {
+    case infinity
+    case lamp
+    case infinityLamp
+}
+
 /// Пользовательские настройки InfiniWake.
 struct InfiniWakeSettings: Codable, Equatable {
     /// Длительность авто-выключения в минутах. 0 = бесконечно (∞).
@@ -10,6 +17,8 @@ struct InfiniWakeSettings: Codable, Equatable {
     var hotkeyModifiers: UInt32 = 0
     /// Показывать иконку в менюбаре.
     var showMenuBarIcon: Bool = true
+    /// ∞ или лампочка (как на логотипе).
+    var menuBarIconStyle: MenuBarIconStyle = .infinity
     /// Подсвечивать Caps Lock LED пока keep-awake включён.
     var useCapsLockLED: Bool = true
     /// Автозапуск при входе в систему.
@@ -24,6 +33,7 @@ struct InfiniWakeSettings: Codable, Equatable {
         case hotkeyKeyCode
         case hotkeyModifiers
         case showMenuBarIcon
+        case menuBarIconStyle
         case useCapsLockLED
         case launchAtLogin
         case language
@@ -37,6 +47,7 @@ struct InfiniWakeSettings: Codable, Equatable {
         hotkeyKeyCode = try container.decodeIfPresent(UInt16.self, forKey: .hotkeyKeyCode) ?? 0x76
         hotkeyModifiers = try container.decodeIfPresent(UInt32.self, forKey: .hotkeyModifiers) ?? 0
         showMenuBarIcon = try container.decodeIfPresent(Bool.self, forKey: .showMenuBarIcon) ?? true
+        menuBarIconStyle = try container.decodeIfPresent(MenuBarIconStyle.self, forKey: .menuBarIconStyle) ?? .infinity
         useCapsLockLED = try container.decodeIfPresent(Bool.self, forKey: .useCapsLockLED) ?? true
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
         language = try container.decodeIfPresent(AppLanguagePreference.self, forKey: .language) ?? .system

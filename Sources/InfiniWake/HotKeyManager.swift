@@ -50,6 +50,11 @@ final class HotKeyManager {
 
     var usesCapsLock: Bool { isCapsLockMode }
 
+    /// Состояние изменили мы сами (Secure Input) — не слать onCapsLockFollow.
+    func noteExternalCapsLockState(_ on: Bool) {
+        lastCapsLockOn = on
+    }
+
     private func registerCarbonHotKey(keyCode: UInt16, modifiers: UInt32) {
         var eventType = EventTypeSpec(
             eventClass: OSType(kEventClassKeyboard),

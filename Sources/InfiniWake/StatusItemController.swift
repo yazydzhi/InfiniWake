@@ -1,6 +1,6 @@
 import AppKit
 
-/// Иконка в менюбаре: ∞ когда keep-awake без таймера, оставшееся время, полупрозрачная когда выкл.
+/// Иконка в менюбаре: ∞ / лампа / ∞+лампа.
 final class StatusItemController {
     private let statusItem: NSStatusItem
     private let menu = NSMenu()
@@ -16,6 +16,7 @@ final class StatusItemController {
     private var autoOffMinutes = 0
     private var hotkeyTitle = "F4"
     private var helperOK = false
+    private var iconStyle: MenuBarIconStyle = .infinity
 
     init() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -38,13 +39,15 @@ final class StatusItemController {
         remainingText: String,
         autoOffMinutes: Int,
         hotkeyTitle: String,
-        helperOK: Bool
+        helperOK: Bool,
+        iconStyle: MenuBarIconStyle
     ) {
         self.isEnabled = enabled
         self.remainingText = remainingText
         self.autoOffMinutes = autoOffMinutes
         self.hotkeyTitle = hotkeyTitle
         self.helperOK = helperOK
+        self.iconStyle = iconStyle
         render()
         rebuildMenu()
     }
@@ -62,21 +65,32 @@ final class StatusItemController {
 
     private func render() {
         guard let button = statusItem.button else { return }
-        let title: String
-        let alpha: CGFloat
-        if isEnabled {
-            title = remainingText
-            alpha = 1.0
-        } else if autoOffMinutes > 0 {
-            title = L10n.formatMinutes(autoOffMinutes)
-            alpha = 0.35
-        } else {
-            title = "∞"
-            alpha = 0.35
+        switch iconStyle {
+        case .infinity:
+            // Для ∞ оставляем текст таймера, когда режим включён
+            let title: String
+            let alpha: CGFloat
+            if isEnabled {
+                title = remainingText
+                alpha = 1.0
+            } else if autoOffMinutes > 0 {
+                title = L10n.formatMinutes(autoOffMinutes)
+                alpha = 0.35
+            } else {
+                title = "∞"
+                alpha = 0.35
+            }
+            button.image = makeCountdownOrInfinity(text: title, alpha: alpha, emphasized: isEnabled)
+        case .lamp:
+            button.image = MenuBarIconArt.image(style: .lamp, lit: isEnabled)
+        case .infinityLamp:
+            let topText = remainingText == "∞" ? nil : remainingText
+            button.image = MenuBarIconArt.image(
+                style: .infinityLamp,
+                lit: isEnabled,
+                infinityLampTopText: topText
+            )
         }
-
-        let image = Self.makeIcon(text: title, alpha: alpha, emphasized: isEnabled)
-        button.image = image
         button.imagePosition = .imageOnly
         button.toolTip = isEnabled ? L10n.tooltipOn(remaining: remainingText) : L10n.tooltipOff()
     }
@@ -167,8 +181,8 @@ final class StatusItemController {
         onSelectAutoOff?(sender.tag)
     }
 
-    private static func makeIcon(text: String, alpha: CGFloat, emphasized: Bool) -> NSImage {
-        let font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: emphasized ? .semibold : .regular)
+    private func makeCountdownOrInfinity(text: String, alpha: CGFloat, emphasized: Bool) -> NSImage {
+        let font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: emphasized ? .semibold : .regular)
         let attributes: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: NSColor.labelColor.withAlphaComponent(alpha)
@@ -176,16 +190,16 @@ final class StatusItemController {
         let size = (text as NSString).size(withAttributes: attributes)
         let width = max(ceil(size.width) + 4, 18)
         let height: CGFloat = 18
-        let image = NSImage(size: NSSize(width: width, height: height))
-        image.lockFocus()
-        let rect = NSRect(
-            x: (width - size.width) / 2,
-            y: (height - size.height) / 2,
-            width: size.width,
-            height: size.height
-        )
-        (text as NSString).draw(in: rect, withAttributes: attributes)
-        image.unlockFocus()
+        let image = NSImage(size: NSSize(width: width, height: height), flipped: false) { _ in
+            let rect = NSRect(
+                x: (width - size.width) / 2,
+                y: (height - size.height) / 2,
+                width: size.width,
+                height: size.height
+            )
+            (text as NSString).draw(in: rect, withAttributes: attributes)
+            return true
+        }
         image.isTemplate = true
         return image
     }
