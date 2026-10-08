@@ -134,6 +134,16 @@ Also remove InfiniWake from **System Settings → Privacy & Security → Accessi
 
 ---
 
+## Website & App Store docs
+
+Static landing + legal pages (Privacy / Terms / Data / Support) live in [`web/`](web/):
+
+- Local: `cd web && python3 -m http.server 8765`
+- Target host: **https://ponravilos.ru/infiniwake** (deploy notes in [`web/README.md`](web/README.md))
+- App Store Connect copy: [`web/APP_STORE_CONTENT.md`](web/APP_STORE_CONTENT.md)
+
+---
+
 ## License
 
 InfiniWake is **free software** under the [MIT License](LICENSE).  

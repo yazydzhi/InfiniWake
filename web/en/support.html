@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Support — InfiniWake</title>
+  <meta name="description" content="InfiniWake support contacts and FAQ for Mac App Store / DMG users.">
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link rel="icon" type="image/png" href="../assets/img/favicon.png">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="./index.html">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-text"><strong>InfiniWake</strong></div>
+      </a>
+      <nav class="nav">
+        <a href="../support.html">RU</a>
+        <a href="./support.html" class="active">EN</a>
+        <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">🌓</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="legal container section">
+    <h1>Support</h1>
+    <p>Need help with InfiniWake? Email us — we will reply as soon as we can.</p>
+
+    <h2>Contact</h2>
+    <ul>
+      <li><strong>Email:</strong> <a href="mailto:infiniwake@ponravilos.ru">infiniwake@ponravilos.ru</a></li>
+      <li><strong>GitHub Issues:</strong> <a href="https://github.com/yazydzhi/InfiniWake/issues">yazydzhi/InfiniWake</a></li>
+    </ul>
+
+    <h2>FAQ</h2>
+    <h3>No menu-bar icon</h3>
+    <p>Open InfiniWake Settings and enable “Show menu bar icon”. Make sure the app runs from <code>/Applications</code>.</p>
+
+    <h3>Caps Lock lamp does not stay on</h3>
+    <p>Grant Accessibility to InfiniWake, then quit the app completely and reopen it. Keep-awake still works without the lamp.</p>
+
+    <h3>Closed-lid mode</h3>
+    <p>Install the optional helper from the repository (<code>scripts/install-helper.sh</code>). The base power assertion is intended for an open lid.</p>
+
+    <h3>Gatekeeper blocks launch</h3>
+    <p>For ad-hoc GitHub builds: right-click the app → Open, or allow it under Privacy &amp; Security.</p>
+
+    <h2>What to include in email</h2>
+    <ul>
+      <li>macOS and InfiniWake versions;</li>
+      <li>chip (Apple Silicon / Intel);</li>
+      <li>expected vs actual behavior;</li>
+      <li>settings screenshot (optional).</li>
+    </ul>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-links">
+        <a href="./privacy.html">Privacy Policy</a>
+        <a href="./data.html">Data Processing Policy</a>
+        <a href="./terms.html">Terms of Use</a>
+        <a href="./support.html">Support</a>
+      </div>
+      <div class="footer-meta">© <span id="year"></span> InfiniWake</div>
+    </div>
+  </footer>
+  <script>
+    const themeKey = 'infiniwake-theme';
+    const root = document.documentElement;
+    const saved = localStorage.getItem(themeKey);
+    if (saved) root.setAttribute('data-theme', saved);
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem(themeKey, next);
+    });
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

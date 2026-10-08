@@ -10,7 +10,7 @@ enum AppInfo {
     static let creatorHandle = "azg"
     static let copyright = "© 2026 Владимир Языджи"
     static let copyrightEN = "© 2026 Vladimir Yazydzhi"
-    static let websiteURL = URL(string: "https://github.com/yazydzhi/InfiniWake")
+    static let websiteURL = URL(string: "https://ponravilos.ru/infiniwake")
     static let bundleID = "com.azg.InfiniWake"
 
     static var localizedCreator: String {

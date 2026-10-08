@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Политика обработки данных — InfiniWake</title>
+  <link rel="stylesheet" href="./assets/css/styles.css">
+  <link rel="icon" type="image/png" href="./assets/img/favicon.png">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="./index.html">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-text"><strong>InfiniWake</strong></div>
+      </a>
+      <nav class="nav">
+        <a href="./data.html" class="active">RU</a>
+        <a href="./en/data.html">EN</a>
+        <button id="themeToggle" class="theme-toggle" aria-label="Переключить тему">🌓</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="legal container section">
+    <h1>Политика обработки персональных данных</h1>
+    <p>Дата вступления в силу: <strong>8 октября 2026</strong></p>
+    <p>Версия документа: <strong>1.0</strong> · Приложение: <strong>InfiniWake 1.1.6+</strong></p>
+    <p>Документ дополняет <a href="./privacy.html">Политику конфиденциальности</a> и ориентирован на требования App Store Connect / GDPR / 152-ФЗ в части прозрачности.</p>
+
+    <h2>1. Оператор</h2>
+    <p>Оператор: Владимир Языджи · контакт: <a href="mailto:infiniwake@ponravilos.ru">infiniwake@ponravilos.ru</a></p>
+
+    <h2>2. Правовые основания</h2>
+    <ul>
+      <li><strong>Исполнение договора / предоставление функциональности</strong> — локальные настройки и keep-awake;</li>
+      <li><strong>Законный интерес</strong> — поддержка пользователей при добровольном обращении;</li>
+      <li><strong>Согласие</strong> — только если вы сами передаёте данные в письме в поддержку.</li>
+    </ul>
+
+    <h2>3. Категории данных</h2>
+    <h3>3.1 На устройстве</h3>
+    <ul>
+      <li>предпочтения интерфейса и keep-awake;</li>
+      <li>состояние таймера и выбранного хоткея.</li>
+    </ul>
+    <h3>3.2 Не обрабатываются приложением централизованно</h3>
+    <ul>
+      <li>геолокация;</li>
+      <li>контакты, фото, микрофон, камера;</li>
+      <li>история браузера;</li>
+      <li>финансовые данные;</li>
+      <li>рекламные идентификаторы.</li>
+    </ul>
+
+    <h2>4. Цели и минимизация</h2>
+    <p>Обрабатываются только данные, необходимые для заявленных функций. Нет профилирования и автоматических решений, затрагивающих права пользователя.</p>
+
+    <h2>5. Сроки</h2>
+    <ul>
+      <li>локальные настройки — до удаления Приложения / сброса настроек;</li>
+      <li>переписка поддержки — до завершения обращения + разумный архивный срок (до 24 месяцев).</li>
+    </ul>
+
+    <h2>6. Права субъекта данных</h2>
+    <p>Доступ, уточнение, удаление, ограничение — через удаление приложения и/или запрос на email поддержки. Жалоба в надзорный орган — по месту жительства.</p>
+
+    <h2>7. App Privacy (для App Store)</h2>
+    <p>В карточке конфиденциальности App Store Connect InfiniWake указывается как приложение, которое <strong>не собирает данные</strong> для отслеживания и не передаёт данные разработчику с устройства в ходе обычной работы (Data Not Collected), за исключением добровольных обращений в поддержку вне приложения.</p>
+
+    <h2>8. Контакты</h2>
+    <p><a href="mailto:privacy@ponravilos.ru">privacy@ponravilos.ru</a> · <a href="mailto:infiniwake@ponravilos.ru">infiniwake@ponravilos.ru</a></p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-links">
+        <a href="./privacy.html">Политика конфиденциальности</a>
+        <a href="./data.html">Политика обработки данных</a>
+        <a href="./terms.html">Пользовательское соглашение</a>
+        <a href="./support.html">Поддержка</a>
+      </div>
+      <div class="footer-meta">© <span id="year"></span> InfiniWake</div>
+    </div>
+  </footer>
+  <script>
+    const themeKey = 'infiniwake-theme';
+    const root = document.documentElement;
+    const saved = localStorage.getItem(themeKey);
+    if (saved) root.setAttribute('data-theme', saved);
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem(themeKey, next);
+    });
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

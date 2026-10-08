@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Пользовательское соглашение — InfiniWake</title>
+  <link rel="stylesheet" href="./assets/css/styles.css">
+  <link rel="icon" type="image/png" href="./assets/img/favicon.png">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="./index.html">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-text"><strong>InfiniWake</strong></div>
+      </a>
+      <nav class="nav">
+        <a href="./terms.html" class="active">RU</a>
+        <a href="./en/terms.html">EN</a>
+        <button id="themeToggle" class="theme-toggle" aria-label="Переключить тему">🌓</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="legal container section">
+    <h1>Пользовательское соглашение</h1>
+    <p>Дата вступления в силу: <strong>8 октября 2026</strong></p>
+    <p>Версия документа: <strong>1.0</strong> · Приложение: <strong>InfiniWake 1.1.6+</strong></p>
+
+    <h2>1. Принятие условий</h2>
+    <p>Устанавливая или используя InfiniWake («Приложение»), вы соглашаетесь с этими условиями. Если вы не согласны — не используйте Приложение.</p>
+
+    <h2>2. Описание сервиса</h2>
+    <p>
+      InfiniWake — утилита для macOS в менюбаре. Она помогает удерживать компьютер в состоянии
+      бодрствования (keep-awake) по хоткею или клику, с опциональным индикатором Caps Lock LED,
+      таймером авто-выключения и запуском при входе в систему.
+    </p>
+
+    <h2>3. Лицензия</h2>
+    <p>
+      Исходный код распространяется под лицензией <strong>MIT</strong>
+      (см. репозиторий на GitHub). Бинарные сборки с сайта / GitHub / Mac App Store
+      предоставляются «как есть» в соответствии с условиями распространения платформы.
+    </p>
+
+    <h2>4. Использование</h2>
+    <h3>4.1 Разрешено</h3>
+    <ul>
+      <li>личное и рабочее использование keep-awake;</li>
+      <li>изменение настроек в интерфейсе Приложения;</li>
+      <li>использование в соответствии с законодательством вашей страны.</li>
+    </ul>
+    <h3>4.2 Запрещено</h3>
+    <ul>
+      <li>использование Приложения для нарушения закона или прав третьих лиц;</li>
+      <li>попытки обойти механизмы безопасности macOS во вред системе или другим пользователям;</li>
+      <li>представление Приложения как продукта Apple.</li>
+    </ul>
+
+    <h2>5. Платежи</h2>
+    <p>
+      Базовая версия InfiniWake бесплатна. Если в будущем появятся платные функции через Mac App Store,
+      оплата и отмена покупок регулируются правилами Apple. Мы не обрабатываем данные карт напрямую.
+    </p>
+
+    <h2>6. Ограничение ответственности</h2>
+    <p>
+      Приложение предоставляется «как есть». Мы стремимся к стабильной работе, но не гарантируем
+      непрерывную доступность keep-awake во всех конфигурациях оборудования, драйверов клавиатуры
+      и настроек энергосбережения. Мы не отвечаем за косвенные убытки, потерю данных или простоя,
+      возникшие из-за использования или невозможности использования Приложения.
+    </p>
+
+    <h2>7. Разрешения системы</h2>
+    <p>
+      Некоторые функции требуют Accessibility или установки опционального helper. Вы можете отказаться
+      от этих функций и продолжать использовать базовый keep-awake.
+    </p>
+
+    <h2>8. Изменения</h2>
+    <p>Мы можем обновлять соглашение. Актуальная версия публикуется на этой странице.</p>
+
+    <h2>9. Применимое право</h2>
+    <p>Насколько это допустимо, отношения регулируются законодательством Российской Федерации, без ущерба для императивных норм страны вашего проживания.</p>
+
+    <h2>10. Контакты</h2>
+    <p><a href="mailto:infiniwake@ponravilos.ru">infiniwake@ponravilos.ru</a> ·
+      <a href="https://ponravilos.ru/infiniwake">https://ponravilos.ru/infiniwake</a></p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-links">
+        <a href="./privacy.html">Политика конфиденциальности</a>
+        <a href="./data.html">Политика обработки данных</a>
+        <a href="./terms.html">Пользовательское соглашение</a>
+        <a href="./support.html">Поддержка</a>
+      </div>
+      <div class="footer-meta">© <span id="year"></span> InfiniWake</div>
+    </div>
+  </footer>
+  <script>
+    const themeKey = 'infiniwake-theme';
+    const root = document.documentElement;
+    const saved = localStorage.getItem(themeKey);
+    if (saved) root.setAttribute('data-theme', saved);
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem(themeKey, next);
+    });
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

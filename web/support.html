@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Поддержка — InfiniWake</title>
+  <meta name="description" content="Поддержка InfiniWake: контакты и типичные вопросы для пользователей Mac App Store / DMG.">
+  <link rel="stylesheet" href="./assets/css/styles.css">
+  <link rel="icon" type="image/png" href="./assets/img/favicon.png">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="./index.html">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-text"><strong>InfiniWake</strong></div>
+      </a>
+      <nav class="nav">
+        <a href="./support.html" class="active">RU</a>
+        <a href="./en/support.html">EN</a>
+        <button id="themeToggle" class="theme-toggle" aria-label="Переключить тему">🌓</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="legal container section">
+    <h1>Поддержка</h1>
+    <p>Нужна помощь с InfiniWake? Напишите нам — ответим как можно быстрее.</p>
+
+    <h2>Контакты</h2>
+    <ul>
+      <li><strong>Email:</strong> <a href="mailto:infiniwake@ponravilos.ru">infiniwake@ponravilos.ru</a></li>
+      <li><strong>GitHub Issues:</strong> <a href="https://github.com/yazydzhi/InfiniWake/issues">yazydzhi/InfiniWake</a></li>
+    </ul>
+
+    <h2>Частые вопросы</h2>
+    <h3>Не видно иконки в менюбаре</h3>
+    <p>Откройте настройки InfiniWake и включите «Показывать иконку в менюбаре». Убедитесь, что приложение запущено из <code>/Applications</code>.</p>
+
+    <h3>Лампа Caps Lock не держится</h3>
+    <p>Выдайте Accessibility приложению InfiniWake, затем полностью закройте приложение и откройте снова. Keep-awake работает и без лампы.</p>
+
+    <h3>Нужен режим с закрытой крышкой</h3>
+    <p>Установите опциональный helper из репозитория (<code>scripts/install-helper.sh</code>). Базовый power assertion рассчитан на открытую крышку.</p>
+
+    <h3>Gatekeeper блокирует запуск</h3>
+    <p>Для ad-hoc сборок с GitHub: ПКМ по приложению → Открыть, либо разрешите в «Конфиденциальность и безопасность».</p>
+
+    <h2>Что указать в письме</h2>
+    <ul>
+      <li>версия macOS и InfiniWake;</li>
+      <li>Chip (Apple Silicon / Intel);</li>
+      <li>что ожидали и что произошло;</li>
+      <li>скрин настроек (по желанию).</li>
+    </ul>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-links">
+        <a href="./privacy.html">Политика конфиденциальности</a>
+        <a href="./data.html">Политика обработки данных</a>
+        <a href="./terms.html">Пользовательское соглашение</a>
+        <a href="./support.html">Поддержка</a>
+      </div>
+      <div class="footer-meta">© <span id="year"></span> InfiniWake</div>
+    </div>
+  </footer>
+  <script>
+    const themeKey = 'infiniwake-theme';
+    const root = document.documentElement;
+    const saved = localStorage.getItem(themeKey);
+    if (saved) root.setAttribute('data-theme', saved);
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem(themeKey, next);
+    });
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

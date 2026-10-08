@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>InfiniWake — keep Mac awake</title>
+  <meta name="description" content="InfiniWake is a macOS menu-bar keep-awake utility with a hotkey, Caps Lock LED indicator, and auto-off timer.">
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link rel="icon" type="image/png" href="../assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <meta name="theme-color" content="#121214">
+  <meta property="og:title" content="InfiniWake — keep Mac awake">
+  <meta property="og:description" content="Menu-bar keep-awake for macOS: hotkey, Caps Lock LED, timer, launch at login.">
+  <meta property="og:image" content="../assets/img/icon-512.png">
+  <link rel="alternate" hreflang="ru" href="../index.html">
+  <link rel="alternate" hreflang="en" href="./index.html">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="./index.html">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-text">
+          <strong>InfiniWake</strong>
+          <span>keep Mac awake</span>
+        </div>
+      </a>
+      <nav class="nav">
+        <a href="../index.html">RU</a>
+        <a href="./index.html" class="active">EN</a>
+        <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">🌓</button>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-content">
+        <h1>Keep your Mac awake while you work</h1>
+        <p class="lead">
+          InfiniWake is a lightweight menu-bar utility. Toggle keep-awake with a hotkey (F4 by default),
+          see status via the Caps Lock LED and ∞ in the menu bar, and optionally set an auto-off timer.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/yazydzhi/InfiniWake/releases/latest" target="_blank" rel="noopener">Download DMG</a>
+          <a class="btn btn-secondary" href="#features">Features</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="app-preview">
+          <div class="menubar-mock" aria-hidden="true">
+            <span>menu bar</span>
+            <span class="status">∞ <span class="lamp-pill"></span></span>
+          </div>
+          <img class="preview-icon" src="../assets/img/icon-512.png" alt="InfiniWake icon">
+          <p class="preview-caption">macOS 13+ · universal (arm64 + x86_64) · MIT</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="features section">
+    <div class="container">
+      <h2>Why InfiniWake</h2>
+      <div class="feature-grid">
+        <div class="feature">
+          <div class="feature-icon">⌨️</div>
+          <h3>Hotkey</h3>
+          <p>F4 by default; Caps Lock, F1–F12, and other shortcuts in Settings.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">💡</div>
+          <h3>Caps Lock lamp</h3>
+          <p>Use the physical LED as a keep-awake indicator — without real CAPS typing.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">⏱</div>
+          <h3>Timer</h3>
+          <p>∞ unlimited or auto-off from 15 minutes to 8 hours, with countdown in the menu bar.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">∞</div>
+          <h3>Icon styles</h3>
+          <p>∞, lamp, or ∞+lamp — pick in Settings; changes apply immediately.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="permissions" class="permissions section">
+    <div class="container">
+      <h2>Permissions</h2>
+      <p class="muted">Keep-awake works without special rights. Extra permissions are optional.</p>
+      <div class="perm-grid">
+        <div class="perm-card">
+          <h3>Accessibility</h3>
+          <p>Required only for Caps Lock LED mode without real CAPS. Granted in System Settings.</p>
+        </div>
+        <div class="perm-card">
+          <h3>Closed lid</h3>
+          <p>Optional `pmset` helper so the Mac stays awake with the lid closed (agents, SSH, builds).</p>
+        </div>
+        <div class="perm-card">
+          <h3>Local data</h3>
+          <p>Settings stay on your Mac. No accounts, ads, or cloud analytics.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="download" class="download section">
+    <div class="container">
+      <h2>Download</h2>
+      <p class="muted">Universal DMG · latest release on GitHub</p>
+      <a class="btn btn-primary btn-lg" href="https://github.com/yazydzhi/InfiniWake/releases/latest" target="_blank" rel="noopener">Open Releases</a>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-links">
+        <a href="./privacy.html">Privacy Policy</a>
+        <a href="./data.html">Data Processing Policy</a>
+        <a href="./terms.html">Terms of Use</a>
+        <a href="./support.html">Support</a>
+      </div>
+      <div class="footer-meta">
+        <span>© <span id="year"></span> InfiniWake · Vladimir Yazydzhi</span>
+        <span> · <a href="mailto:infiniwake@ponravilos.ru">infiniwake@ponravilos.ru</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const themeKey = 'infiniwake-theme';
+    const root = document.documentElement;
+    const saved = localStorage.getItem(themeKey);
+    if (saved) root.setAttribute('data-theme', saved);
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem(themeKey, next);
+    });
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

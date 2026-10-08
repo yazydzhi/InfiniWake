@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy — InfiniWake</title>
+  <meta name="description" content="InfiniWake Privacy Policy for Mac App Store listing.">
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link rel="icon" type="image/png" href="../assets/img/favicon.png">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="./index.html">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-text"><strong>InfiniWake</strong></div>
+      </a>
+      <nav class="nav">
+        <a href="../privacy.html">RU</a>
+        <a href="./privacy.html" class="active">EN</a>
+        <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">🌓</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="legal container section">
+    <h1>Privacy Policy</h1>
+    <p>Effective date: <strong>October 8, 2026</strong></p>
+    <p>Document version: <strong>1.0</strong> · App: <strong>InfiniWake 1.1.6+</strong></p>
+
+    <h2>1. Overview</h2>
+    <p>
+      This Policy explains how InfiniWake (the “App”), developed by Vladimir Yazydzhi,
+      handles data on macOS.
+    </p>
+
+    <h2>2. Data we process</h2>
+    <h3>2.1 Personal data</h3>
+    <p>The App does <strong>not</strong> require an account and does <strong>not</strong> collect your name, email, contacts, or payment details during normal use.</p>
+    <p>Email is only received if you contact support yourself.</p>
+
+    <h3>2.2 Local settings</h3>
+    <ul>
+      <li>UI language;</li>
+      <li>toggle hotkey;</li>
+      <li>auto-off timer;</li>
+      <li>menu-bar icon style;</li>
+      <li>flags: Caps Lock lamp, show icon, launch at login.</li>
+    </ul>
+    <p>These stay on your Mac (UserDefaults / app preferences) and are not sent to our servers.</p>
+
+    <h3>2.3 System permissions</h3>
+    <ul>
+      <li><strong>Accessibility</strong> — optional, to filter real Caps Lock when LED indicator mode is on;</li>
+      <li><strong>Privileged helper (optional)</strong> — a narrow `pmset` helper if you install it for closed-lid keep-awake.</li>
+    </ul>
+
+    <h3>2.4 What we do not do</h3>
+    <ul>
+      <li>no cloud analytics and no advertising SDKs;</li>
+      <li>no sale or marketing transfer of user data to third parties;</li>
+      <li>no keystroke logging beyond the minimum needed for Caps Lock LED / hotkey modes.</li>
+    </ul>
+
+    <h2>3. Purposes</h2>
+    <ul>
+      <li>provide keep-awake and status indication;</li>
+      <li>persist user preferences;</li>
+      <li>respond to support requests (only if you contact us).</li>
+    </ul>
+
+    <h2>4. Third parties</h2>
+    <p>If distributed via the Mac App Store, Apple handles payments and Apple ID data. We do not receive your card details.</p>
+    <p>Source and releases are also on GitHub; downloads there are subject to GitHub’s policies.</p>
+
+    <h2>5. Storage and security</h2>
+    <ul>
+      <li>settings — on the user’s device;</li>
+      <li>support emails — in the developer mailbox, only as long as needed (typically up to 24 months).</li>
+    </ul>
+
+    <h2>6. Your rights</h2>
+    <p>
+      You can remove the App and its local settings. For data questions email
+      <a href="mailto:infiniwake@ponravilos.ru">infiniwake@ponravilos.ru</a>
+      or <a href="mailto:privacy@ponravilos.ru">privacy@ponravilos.ru</a>.
+    </p>
+
+    <h2>7. Changes</h2>
+    <p>The current version is always on this page. Material updates will change the effective date.</p>
+
+    <h2>8. Contact</h2>
+    <p><strong>Developer:</strong> Vladimir Yazydzhi</p>
+    <p><strong>Email:</strong> <a href="mailto:infiniwake@ponravilos.ru">infiniwake@ponravilos.ru</a></p>
+    <p><strong>Website:</strong> <a href="https://ponravilos.ru/infiniwake">https://ponravilos.ru/infiniwake</a></p>
+    <p><strong>Repository:</strong> <a href="https://github.com/yazydzhi/InfiniWake">https://github.com/yazydzhi/InfiniWake</a></p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-links">
+        <a href="./privacy.html">Privacy Policy</a>
+        <a href="./data.html">Data Processing Policy</a>
+        <a href="./terms.html">Terms of Use</a>
+        <a href="./support.html">Support</a>
+      </div>
+      <div class="footer-meta">© <span id="year"></span> InfiniWake</div>
+    </div>
+  </footer>
+  <script>
+    const themeKey = 'infiniwake-theme';
+    const root = document.documentElement;
+    const saved = localStorage.getItem(themeKey);
+    if (saved) root.setAttribute('data-theme', saved);
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem(themeKey, next);
+    });
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>InfiniWake — keep Mac awake</title>
+  <meta name="description" content="InfiniWake — утилита в менюбаре macOS: держит Mac бодрствующим по хоткею, с индикатором Caps Lock LED и таймером авто-выключения.">
+  <link rel="stylesheet" href="./assets/css/styles.css">
+  <link rel="icon" type="image/png" href="./assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="./assets/img/apple-touch-icon.png">
+  <meta name="theme-color" content="#121214">
+  <meta property="og:title" content="InfiniWake — keep Mac awake">
+  <meta property="og:description" content="Menu-bar keep-awake для macOS: хоткей, Caps Lock LED, таймер, запуск при входе.">
+  <meta property="og:image" content="./assets/img/icon-512.png">
+  <link rel="alternate" hreflang="en" href="./en/index.html">
+  <link rel="alternate" hreflang="ru" href="./index.html">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="./index.html">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-text">
+          <strong>InfiniWake</strong>
+          <span>keep Mac awake</span>
+        </div>
+      </a>
+      <nav class="nav">
+        <a href="./index.html" class="active">RU</a>
+        <a href="./en/index.html">EN</a>
+        <button id="themeToggle" class="theme-toggle" aria-label="Переключить тему">🌓</button>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-content">
+        <h1>Mac не засыпает, пока вы работаете</h1>
+        <p class="lead">
+          InfiniWake — лёгкая утилита в менюбаре. Включайте keep-awake одним хоткеем (по умолчанию F4),
+          смотрите статус по лампе Caps Lock и ∞ в панели, при необходимости — таймер авто-выключения.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/yazydzhi/InfiniWake/releases/latest" target="_blank" rel="noopener">Скачать DMG</a>
+          <a class="btn btn-secondary" href="#features">Особенности</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="app-preview">
+          <div class="menubar-mock" aria-hidden="true">
+            <span>менюбар</span>
+            <span class="status">∞ <span class="lamp-pill"></span></span>
+          </div>
+          <img class="preview-icon" src="./assets/img/icon-512.png" alt="Иконка InfiniWake">
+          <p class="preview-caption">macOS 13+ · universal (arm64 + x86_64) · MIT</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="features section">
+    <div class="container">
+      <h2>Почему InfiniWake</h2>
+      <div class="feature-grid">
+        <div class="feature">
+          <div class="feature-icon">⌨️</div>
+          <h3>Хоткей</h3>
+          <p>F4 по умолчанию, Caps Lock, F1–F12 и другие сочетания — в настройках.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">💡</div>
+          <h3>Лампа Caps Lock</h3>
+          <p>Физический LED как индикатор keep-awake — без настоящего CAPS в тексте.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">⏱</div>
+          <h3>Таймер</h3>
+          <p>∞ или авто-выключение от 15 минут до 8 часов с обратным отсчётом в менюбаре.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">∞</div>
+          <h3>Стили иконки</h3>
+          <p>∞, лампа или ∞+лампа — выбор в настройках, изменения применяются сразу.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="permissions" class="permissions section">
+    <div class="container">
+      <h2>Разрешения</h2>
+      <p class="muted">Keep-awake работает без специальных прав. Дополнительно — только по желанию.</p>
+      <div class="perm-grid">
+        <div class="perm-card">
+          <h3>Accessibility</h3>
+          <p>Нужен для режима лампы Caps Lock без настоящего CAPS. Выдаётся в Системных настройках.</p>
+        </div>
+        <div class="perm-card">
+          <h3>Закрытая крышка</h3>
+          <p>Опциональный helper `pmset` — чтобы Mac не засыпал с закрытой крышкой (агенты, SSH, сборки).</p>
+        </div>
+        <div class="perm-card">
+          <h3>Локальные данные</h3>
+          <p>Настройки хранятся на вашем Mac. Нет аккаунтов, рекламы и облачной аналитики.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="download" class="download section">
+    <div class="container">
+      <h2>Скачать</h2>
+      <p class="muted">Universal DMG · актуальный релиз на GitHub</p>
+      <a class="btn btn-primary btn-lg" href="https://github.com/yazydzhi/InfiniWake/releases/latest" target="_blank" rel="noopener">Открыть Releases</a>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-links">
+        <a href="./privacy.html">Политика конфиденциальности</a>
+        <a href="./data.html">Политика обработки данных</a>
+        <a href="./terms.html">Пользовательское соглашение</a>
+        <a href="./support.html">Поддержка</a>
+      </div>
+      <div class="footer-meta">
+        <span>© <span id="year"></span> InfiniWake · Владимир Языджи</span>
+        <span> · <a href="mailto:infiniwake@ponravilos.ru">infiniwake@ponravilos.ru</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const themeKey = 'infiniwake-theme';
+    const root = document.documentElement;
+    const saved = localStorage.getItem(themeKey);
+    if (saved) root.setAttribute('data-theme', saved);
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem(themeKey, next);
+    });
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
