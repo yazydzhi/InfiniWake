@@ -34,8 +34,7 @@ cd web && python3 -m http.server 8765
 - https://ponravilos.ru/infiniwake/support.html
 - https://ponravilos.ru/infiniwake/en/
 
-Поддомен (Caddy уже настроен): `https://ponravilos.ru/infiniwake`  
-Нужна A-запись в панели Hostkey DNS: имя `infiniwake`, тип A, значение `185.70.105.198`.
+Поддомен: https://infiniwake.ponravilos.ru/ (A `infiniwake` → `185.70.105.198`, HTTPS с 10.10.2026).
 
 ## Деплой
 

@@ -14,7 +14,7 @@
 
 EN: `https://ponravilos.ru/infiniwake/en/…`
 
-Поддомен `https://ponravilos.ru/infiniwake` настроен в Caddy; нужен A-запись в Hostkey DNS: `infiniwake` → `185.70.105.198`.
+Поддомен https://infiniwake.ponravilos.ru/ живой (A `infiniwake` → `185.70.105.198`).
 
 ## App Privacy (questionnaire)
 
@@ -119,8 +119,8 @@ awake,caffeine,keep awake,menu bar,caps lock,pmset,sleep,mac,utility,timer
 ## Чеклист перед сабмитом
 
 - [x] Задеплоить `web/` на https://ponravilos.ru/infiniwake/
-- [ ] (Опционально) A-запись `infiniwake` → `185.70.105.198` в Hostkey → https://ponravilos.ru/infiniwake
-- [ ] Проверить открытие Privacy / Support URL без редиректов с ошибкой
+- [x] A-запись `infiniwake` → `185.70.105.198`, https://infiniwake.ponravilos.ru/ отвечает 200
+- [x] Privacy / Support URL открываются по HTTPS (проверено 26.10.2026)
 - [ ] Заполнить App Privacy: Data Not Collected
 - [ ] Вставить Subtitle / Description / Keywords
 - [ ] Приложить скриншоты Mac
