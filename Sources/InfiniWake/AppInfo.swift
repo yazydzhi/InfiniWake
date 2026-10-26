@@ -25,7 +25,7 @@ enum AppInfo {
         """
         \(name) \(version) (\(build))
 
-        Держит Mac бодрствующим. Caps Lock — только лампа-индикатор, без настоящего CAPS.
+        Держит Mac бодрствующим.
 
         Создатель: \(creatorName) (@\(creatorHandle))
         \(copyright)

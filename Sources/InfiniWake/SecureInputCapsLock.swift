@@ -1,3 +1,4 @@
+#if !APPSTORE
 import AppKit
 import ApplicationServices
 import Carbon.HIToolbox
@@ -131,3 +132,4 @@ private let secureInputFocusObserverCallback: AXObserverCallback = { _, _, _, re
     guard let refcon else { return }
     Unmanaged<SecureInputFocusMonitor>.fromOpaque(refcon).takeUnretainedValue().focusDidChange()
 }
+#endif

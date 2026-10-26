@@ -1,3 +1,4 @@
+#if !APPSTORE
 import Foundation
 import IOKit
 import IOKit.hidsystem
@@ -168,3 +169,4 @@ private enum CapsLockHID {
         ) == KERN_SUCCESS
     }
 }
+#endif

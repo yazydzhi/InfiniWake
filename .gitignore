@@ -11,3 +11,6 @@ xcuserdata/
 *.swp
 *~
 dist/
+.build-xcode/
+Resources/Info.plist
+Resources/InfiniWake.entitlements

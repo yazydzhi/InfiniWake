@@ -1,3 +1,4 @@
+#if !APPSTORE
 import Foundation
 
 /// Некоторые драйверы клавиатуры забирают Caps Lock LED и не синхронизируют её
@@ -107,3 +108,4 @@ enum CapsLockLEDDriverFix {
         }
     }
 }
+#endif

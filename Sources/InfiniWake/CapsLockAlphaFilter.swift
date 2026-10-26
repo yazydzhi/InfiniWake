@@ -1,3 +1,4 @@
+#if !APPSTORE
 import AppKit
 import ApplicationServices
 import Carbon.HIToolbox
@@ -140,3 +141,4 @@ final class CapsLockAlphaFilter {
         return Unmanaged.passUnretained(event)
     }
 }
+#endif

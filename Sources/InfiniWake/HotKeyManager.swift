@@ -25,11 +25,13 @@ final class HotKeyManager {
     func register(keyCode: UInt16, modifiers: UInt32) {
         unregister()
 
+        #if !APPSTORE
         if Int(keyCode) == kVK_CapsLock && modifiers == 0 {
             isCapsLockMode = true
             startCapsLockMonitoring()
             return
         }
+        #endif
 
         isCapsLockMode = false
         registerCarbonHotKey(keyCode: keyCode, modifiers: modifiers)

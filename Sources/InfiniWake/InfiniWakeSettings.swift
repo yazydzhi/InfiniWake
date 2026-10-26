@@ -20,7 +20,7 @@ struct InfiniWakeSettings: Codable, Equatable {
     /// ∞ или лампочка (как на логотипе).
     var menuBarIconStyle: MenuBarIconStyle = .infinity
     /// Подсвечивать Caps Lock LED пока keep-awake включён.
-    var useCapsLockLED: Bool = true
+    var useCapsLockLED: Bool = AppFlavor.hasCapsLockLED
     /// Автозапуск при входе в систему.
     var launchAtLogin: Bool = false
     /// Язык интерфейса: system / english / russian.
@@ -48,7 +48,7 @@ struct InfiniWakeSettings: Codable, Equatable {
         hotkeyModifiers = try container.decodeIfPresent(UInt32.self, forKey: .hotkeyModifiers) ?? 0
         showMenuBarIcon = try container.decodeIfPresent(Bool.self, forKey: .showMenuBarIcon) ?? true
         menuBarIconStyle = try container.decodeIfPresent(MenuBarIconStyle.self, forKey: .menuBarIconStyle) ?? .infinity
-        useCapsLockLED = try container.decodeIfPresent(Bool.self, forKey: .useCapsLockLED) ?? true
+        useCapsLockLED = try container.decodeIfPresent(Bool.self, forKey: .useCapsLockLED) ?? AppFlavor.hasCapsLockLED
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
         language = try container.decodeIfPresent(AppLanguagePreference.self, forKey: .language) ?? .system
     }

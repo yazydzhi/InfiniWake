@@ -107,7 +107,9 @@ final class SettingsWindowController: NSWindowController {
         ledCheck.action = #selector(settingChanged(_:))
         iconCheck.target = self
         iconCheck.action = #selector(settingChanged(_:))
-        stack.addArrangedSubview(ledCheck)
+        if AppFlavor.hasCapsLockLED {
+            stack.addArrangedSubview(ledCheck)
+        }
         stack.addArrangedSubview(iconCheck)
 
         iconStylePickerHost.wantsLayer = true
@@ -252,7 +254,7 @@ final class SettingsWindowController: NSWindowController {
         ledCheck.title = L10n.ledCheckbox
         iconCheck.title = L10n.iconCheckbox
         loginCheck.title = L10n.loginCheckbox
-        hintLabel.stringValue = L10n.settingsHint
+        hintLabel.stringValue = AppFlavor.hasCapsLockLED ? L10n.settingsHint : ""
         footerLabel.stringValue = "\(AppInfo.name) \(AppInfo.displayVersion) · \(AppInfo.localizedCreator)"
         refreshIconStyleSelection()
     }

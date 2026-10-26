@@ -190,6 +190,35 @@ enum L10n {
 
     // MARK: - About
 
+    #if APPSTORE
+    static func aboutBody(version: String) -> String {
+        let creator = isRU ? AppInfo.creatorName : AppInfo.creatorNameEN
+        if isRU {
+            return """
+            Версия \(version)
+
+            Keep-awake для macOS: держит Mac бодрствующим по хоткею, с таймером.
+
+            Создатель: \(creator)
+            \(AppInfo.copyright)
+            Лицензия: MIT · бесплатно
+
+            \(AppInfo.websiteURL?.absoluteString ?? "")
+            """
+        }
+        return """
+        Version \(version)
+
+        macOS keep-awake: keeps your Mac awake with a hotkey and an optional timer.
+
+        Created by \(creator)
+        \(AppInfo.copyrightEN)
+        License: MIT · free
+
+        \(AppInfo.websiteURL?.absoluteString ?? "")
+        """
+    }
+    #else
     static func aboutBody(version: String) -> String {
         let creator = isRU ? AppInfo.creatorName : AppInfo.creatorNameEN
         if isRU {
@@ -217,13 +246,18 @@ enum L10n {
         \(AppInfo.websiteURL?.absoluteString ?? "")
         """
     }
+    #endif
 
     // MARK: - Alerts
 
     static var enableFailed: String {
+        #if APPSTORE
+        isRU ? "Не удалось включить keep-awake." : "Could not enable keep-awake."
+        #else
         isRU
             ? "Не удалось включить keep-awake. Установи helper для закрытой крышки (см. README)."
             : "Could not enable keep-awake. Install the closed-lid helper (see README)."
+        #endif
     }
 
     static var accessibilityTitle: String {

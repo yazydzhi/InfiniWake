@@ -135,6 +135,7 @@ final class StatusItemController {
         hotkey.isEnabled = false
         menu.addItem(hotkey)
 
+        #if !APPSTORE
         let helper = NSMenuItem(
             title: helperOK ? L10n.helperOK : L10n.helperNeeded,
             action: nil,
@@ -142,6 +143,7 @@ final class StatusItemController {
         )
         helper.isEnabled = false
         menu.addItem(helper)
+        #endif
 
         menu.addItem(NSMenuItem.separator())
 

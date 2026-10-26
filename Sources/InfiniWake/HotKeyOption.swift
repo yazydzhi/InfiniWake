@@ -12,9 +12,10 @@ struct HotKeyOption: Equatable {
     }
 
     static let all: [HotKeyOption] = {
-        var items: [HotKeyOption] = [
-            HotKeyOption(title: "Caps Lock", keyCode: UInt16(kVK_CapsLock), modifiers: 0)
-        ]
+        var items: [HotKeyOption] = []
+        if AppFlavor.hasCapsLockLED {
+            items.append(HotKeyOption(title: "Caps Lock", keyCode: UInt16(kVK_CapsLock), modifiers: 0))
+        }
 
         let functionKeys: [(String, Int)] = [
             ("F1", kVK_F1), ("F2", kVK_F2), ("F3", kVK_F3), ("F4", kVK_F4),

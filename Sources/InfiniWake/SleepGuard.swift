@@ -15,6 +15,7 @@ final class SleepGuard {
     private(set) var lastError: String?
 
     /// Пути к helper: системный (после install-helper.sh), затем рядом с бинарником.
+    #if !APPSTORE
     private var helperCandidates: [String] {
         var paths: [String] = [
             "/Library/PrivilegedHelperTools/infiniwake-pmset",
@@ -31,8 +32,14 @@ final class SleepGuard {
         return paths
     }
 
+    #endif
+
     private var resolvedHelper: String? {
+        #if APPSTORE
+        nil
+        #else
         helperCandidates.first { FileManager.default.isExecutableFile(atPath: $0) }
+        #endif
     }
 
     var hasPrivilegedHelper: Bool {
@@ -113,6 +120,9 @@ final class SleepGuard {
     }
 
     private func runHelper(_ path: String, argument: String) -> Bool {
+        #if APPSTORE
+        return false
+        #else
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/sudo")
         process.arguments = ["-n", path, argument]
@@ -126,5 +136,6 @@ final class SleepGuard {
             lastError = error.localizedDescription
             return false
         }
+        #endif
     }
 }
